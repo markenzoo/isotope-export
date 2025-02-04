@@ -272,7 +272,7 @@ class IsotopeOrderExport extends \Backend
       $this->arrHeaderFields[$v] = $csvHead[$v];
     }
 
-    $objOrders = \Database::getInstance()->query("SELECT tl_iso_address.* FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' OR document_number IS NOT NULL) GROUP BY member");
+    $objOrders = \Database::getInstance()->query("SELECT tl_iso_address.* FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' AND document_number IS NOT NULL) GROUP BY member");
 
     if (null === $objOrders) {
       return '<div id="tl_buttons">
