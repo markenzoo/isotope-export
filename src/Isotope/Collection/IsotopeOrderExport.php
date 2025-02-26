@@ -139,8 +139,8 @@ class IsotopeOrderExport extends \Backend
           
       $arrOrderItems[$objOrderItems->pid] .= html_entity_decode( 
                                         $objOrderItems->quantity . " x " . strip_tags($objOrderItems->name) . " [" . $objOrderItems->sku . "] " .
-                                        " á " . strip_tags(Isotope::formatPriceWithCurrency($objOrderItems->price)) .  
-                                        " (" . strip_tags(Isotope::formatPriceWithCurrency($objOrderItems->quantity * $objOrderItems->price)) . ")"
+                                        " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .  
+                                        " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
                                       );      
     }
 
@@ -160,9 +160,9 @@ class IsotopeOrderExport extends \Backend
         'phone'         => $objOrders->phone, 
         'email'         => $objOrders->email,
         'items'         => $arrOrderItems[$objOrders->collection_id],
-        'subTotal'      => strip_tags(html_entity_decode(Isotope::formatPriceWithCurrency($objOrders->subTotal))),
-        'taxTotal'      => strip_tags(html_entity_decode(Isotope::formatPriceWithCurrency($objOrders->tax_free_subtotal))),
-        'grandTotal'    => strip_tags(html_entity_decode(Isotope::formatPriceWithCurrency($objOrders->total))),
+        'subTotal'      => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->subTotal))),
+        'taxTotal'      => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->tax_free_subtotal))),
+        'grandTotal'    => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->total))),
       );         
     }
     
@@ -219,9 +219,9 @@ class IsotopeOrderExport extends \Backend
         'count'         => $objOrderItems->quantity,
         'item_sku'      => html_entity_decode( $objOrderItems->sku ),
         'item_name'     => strip_tags(html_entity_decode($objOrderItems->name)),
-        'item_price'    => strip_tags(html_entity_decode(Isotope::formatPriceWithCurrency($objOrderItems->price))),
+        'item_price'    => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->price))),
         'configuration' => strip_tags(html_entity_decode($strConfig)),
-        'sum'           => strip_tags(html_entity_decode(Isotope::formatPriceWithCurrency($objOrderItems->quantity * $objOrderItems->price))),    
+        'sum'           => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price))),    
       );    
     }
 
