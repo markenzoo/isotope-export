@@ -147,6 +147,15 @@ class IsotopeOrderExport extends \Backend
     while ($objOrders->next()) {
       if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
 
+	// Check if the order status is 5 or 6 and adjust totals
+    $isNegativeOrder = ($objOrders->order_status == 5 || $objOrders->order_status == 6);
+
+    // Adjust the totals if the status is 5 or 6
+    $subTotal = $isNegativeOrder ? -abs($objOrders->subTotal) : $objOrders->subTotal;
+    $taxTotal = $isNegativeOrder ? -abs($objOrders->tax_free_subtotal) : $objOrders->tax_free_subtotal;
+    $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
+
+	    
       $this->arrContent[] = array(   
 	'status'             => $objOrders->order_status, 
         'order_id'      => $objOrders->document_number,
