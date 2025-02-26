@@ -147,7 +147,8 @@ class IsotopeOrderExport extends \Backend
     while ($objOrders->next()) {
       if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
 
-      $this->arrContent[] = array(    
+      $this->arrContent[] = array(   
+	'status'             => $objOrders->order_status, 
         'order_id'      => $objOrders->document_number,
         'date'          => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
         'company'       => $objOrders->company, 
@@ -230,7 +231,7 @@ class IsotopeOrderExport extends \Backend
   
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
         $this->arrContent[] = array(
-	  'status'             => $objOrders->order_status, 
+	  
           'order_id'           => $objOrders->document_number,
           'date'               => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
           'company'            => $objOrders->company, 
