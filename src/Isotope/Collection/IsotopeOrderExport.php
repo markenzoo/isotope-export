@@ -170,9 +170,9 @@ class IsotopeOrderExport extends \Backend
         'phone'         => $objOrders->phone, 
         'email'         => $objOrders->email,
         'items'         => $arrOrderItems[$objOrders->collection_id],
-        'subTotal'      => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->subTotal))),
-        'taxTotal'      => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->tax_free_subtotal))),
-       	'grandTotal'    =>  strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->total))),
+        'subTotal'      => (float) strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->subTotal))),
+        'taxTotal'      => (float) strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->tax_free_subtotal))),
+       	'grandTotal'    =>  (float) strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->total))),
       );         
     }
     
