@@ -172,7 +172,7 @@ class IsotopeOrderExport extends \Backend
         'items'         => $arrOrderItems[$objOrders->collection_id],
         'subTotal'      => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->subTotal))),
         'taxTotal'      => strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->tax_free_subtotal))),
-       	'grandTotal'    => (float) $objOrders->total,
+       	'grandTotal'    =>  strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->total))),
       );         
     }
     
