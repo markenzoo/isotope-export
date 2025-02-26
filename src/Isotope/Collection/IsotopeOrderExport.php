@@ -156,9 +156,10 @@ class IsotopeOrderExport extends \Backend
     $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
 
     // Format the values as strings while ensuring negative signs are visible
-    $subTotalFormatted = number_format($subTotal, 2, '.', '');
-    $taxTotalFormatted = number_format($taxTotal, 2, '.', '');
-    $grandTotalFormatted = number_format($grandTotal, 2, '.', '');  
+    $subTotalFormatted = "'" . number_format($subTotal, 2, '.', '');  // Force as text
+    $taxTotalFormatted = "'" . number_format($taxTotal, 2, '.', '');    // Force as text
+    $grandTotalFormatted = "'" . number_format($grandTotal, 2, '.', ''); // Force as text
+	    
       $this->arrContent[] = array(   
 	'status'             => $objOrders->order_status, 
         'order_id'      => $objOrders->document_number,
