@@ -147,7 +147,7 @@ class IsotopeOrderExport extends \Backend
     while ($objOrders->next()) {
       if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
 
-	// Check if the order status is 5 or 6 and adjust totals
+	    // Check if the order status is 5 or 6 and adjust totals
     $isNegativeOrder = ($objOrders->order_status == 5 || $objOrders->order_status == 6);
 
     // Adjust the totals if the status is 5 or 6
@@ -155,7 +155,10 @@ class IsotopeOrderExport extends \Backend
     $taxTotal = $isNegativeOrder ? -abs($objOrders->tax_free_subtotal) : $objOrders->tax_free_subtotal;
     $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
 
-	    
+    // Format the values as strings while ensuring negative signs are visible
+    $subTotalFormatted = number_format($subTotal, 2, '.', '');
+    $taxTotalFormatted = number_format($taxTotal, 2, '.', '');
+    $grandTotalFormatted = number_format($grandTotal, 2, '.', '');  
       $this->arrContent[] = array(   
 	'status'             => $objOrders->order_status, 
         'order_id'      => $objOrders->document_number,
@@ -170,9 +173,9 @@ class IsotopeOrderExport extends \Backend
         'phone'         => $objOrders->phone, 
         'email'         => $objOrders->email,
         'items'         => $arrOrderItems[$objOrders->collection_id],
-        'subTotal'      => (float) strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->subTotal))),
-        'taxTotal'      => (float) strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->tax_free_subtotal))),
-       	'grandTotal'    =>  (float) strip_tags(html_entity_decode(Isotope::formatPrice($objOrders->total))),
+        'subTotal'       => $subTotalFormatted,  
+        'taxTotal'       => $taxTotalFormatted,  
+        'grandTotal'     => $grandTotalFormatted, 
       );         
     }
     
