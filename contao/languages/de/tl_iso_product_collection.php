@@ -14,6 +14,7 @@
 /**
  * CSV - Data
  */
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['status']              = "Bestell Status";  
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['order_id']            = "Bestell-ID";  
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['date'  ]              = "Zeitpunkt der Bestellung";  
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['company']             = "Firma";
