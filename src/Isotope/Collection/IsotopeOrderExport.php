@@ -230,7 +230,7 @@ class IsotopeOrderExport extends \Backend
   
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
         $this->arrContent[] = array(
-	  'status'              => $objOrders->order_status, 
+	  'status'             => $objOrders->order_status->name, 
           'order_id'           => $objOrders->document_number,
           'date'               => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
           'company'            => $objOrders->company, 
