@@ -156,9 +156,9 @@ class IsotopeOrderExport extends \Backend
     $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
 
      // Format as number without prepending quote
-    $subTotalFormatted = number_format($subTotal, 2, '.', '');  
-    $taxTotalFormatted = number_format($taxTotal, 2, '.', '');    
-    $grandTotalFormatted = number_format($grandTotal, 2, '.', ''); 
+    $subTotalFormatted = number_format($subTotal, 2, ',', '');  // European format (comma for decimal)
+    $taxTotalFormatted = number_format($taxTotal, 2, ',', '');    // European format
+    $grandTotalFormatted = number_format($grandTotal, 2, ',', ''); // European format
 	    
       $this->arrContent[] = array(   
 	'status'             => $objOrders->order_status, 
