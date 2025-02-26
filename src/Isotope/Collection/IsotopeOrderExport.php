@@ -155,10 +155,10 @@ class IsotopeOrderExport extends \Backend
     $taxTotal = $isNegativeOrder ? -abs($objOrders->tax_free_subtotal) : $objOrders->tax_free_subtotal;
     $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
 
-    // Format the values as strings while ensuring negative signs are visible
-    $subTotalFormatted = "'" . number_format($subTotal, 2, '.', '');  // Force as text
-    $taxTotalFormatted = "'" . number_format($taxTotal, 2, '.', '');    // Force as text
-    $grandTotalFormatted = "'" . number_format($grandTotal, 2, '.', ''); // Force as text
+     // Format as number without prepending quote
+    $subTotalFormatted = number_format($subTotal, 2, '.', '');  
+    $taxTotalFormatted = number_format($taxTotal, 2, '.', '');    
+    $grandTotalFormatted = number_format($grandTotal, 2, '.', ''); 
 	    
       $this->arrContent[] = array(   
 	'status'             => $objOrders->order_status, 
