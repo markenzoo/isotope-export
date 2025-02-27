@@ -145,6 +145,7 @@ class IsotopeOrderExport extends \Backend
 	);
 
 	$arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku . " ");
+    }
 
 
     while ($objOrders->next()) {
