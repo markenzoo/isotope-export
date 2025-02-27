@@ -143,11 +143,9 @@ class IsotopeOrderExport extends \Backend
                                         " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .  
                                         " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
 	);
-      if(!$arrOrderSKUs) {
-	      $arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku);
-      } else {
-	    $arrOrderSKUs[$objOrderItems->pid] .= (", " . $objOrderItems->sku);
-    }
+
+	$arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku . " ");
+
 
     while ($objOrders->next()) {
       if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
