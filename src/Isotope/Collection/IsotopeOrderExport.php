@@ -112,7 +112,7 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'grandTotal');
+    $arrKeys = array('status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'grandTotal', 'item_sku');
      
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
@@ -130,6 +130,7 @@ class IsotopeOrderExport extends \Backend
     $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");
     
     $arrOrderItems = array();
+    $arrOrderSKUs = array();
     
     while ($objOrderItems->next()){  
     // wenn schon ein Produkt da ist, dann einen Zeilenumbruch machen für Excel  
@@ -141,7 +142,8 @@ class IsotopeOrderExport extends \Backend
                                         $objOrderItems->quantity . " x " . strip_tags($objOrderItems->name) . " [" . $objOrderItems->sku . "] " .
                                         " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .  
                                         " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
-                                      );      
+                                      );
+      $arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku);
     }
 
     while ($objOrders->next()) {
@@ -161,7 +163,7 @@ class IsotopeOrderExport extends \Backend
     $grandTotalFormatted = number_format($grandTotal, 2, ',', ''); // European format
 	    
       $this->arrContent[] = array(   
-	'status'             => $objOrders->order_status, 
+  'status'             => $objOrders->order_status, 
         'order_id'      => $objOrders->document_number,
         'date'          => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
         'company'       => $objOrders->company, 
@@ -177,6 +179,7 @@ class IsotopeOrderExport extends \Backend
         'subTotal'       => $subTotalFormatted,  
         'taxTotal'       => $taxTotalFormatted,  
         'grandTotal'     => $grandTotalFormatted, 
+        'item_sku'       => $arrOrderSKUs[$objOrders->collection_id], 
       );         
     }
     
