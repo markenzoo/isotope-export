@@ -143,7 +143,10 @@ class IsotopeOrderExport extends \Backend
                                         " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .  
                                         " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
                                       );
-      $arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku);
+      if(!arrOrderSKUs) {
+	      $arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku);
+      } else {
+	    $arrOrderSKUs[$objOrderItems->pid] .= (", " . $objOrderItems->sku);
     }
 
     while ($objOrders->next()) {
