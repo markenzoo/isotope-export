@@ -21,7 +21,7 @@ use Isotope\Interfaces\IsotopeProduct;
  */
 class IsotopeOrderExport extends \Backend
 {
-  
+
   /**
    * An array with contains the fields
    * @var array
@@ -35,7 +35,7 @@ class IsotopeOrderExport extends \Backend
    */
   protected $arrHeaderFields = array();
 
-  
+
   /**
    * The field delimiter
    * @var string
@@ -65,8 +65,8 @@ class IsotopeOrderExport extends \Backend
     parent::__construct();
     \System::loadLanguageFile('countries');
   }
-  
-  
+
+
   /**
    * Generate the csv file and send it to the browser
    *
@@ -75,21 +75,21 @@ class IsotopeOrderExport extends \Backend
    */
   public function saveToBrowser()
   {
-	if ( count($this->arrContent) < 1 ) {
-	  $strRequest = ampersand(str_replace('&key=export_order', '', $this->Environment->request));	
-	  $strRequest = ampersand(str_replace('&excel=true', '', $strRequest));	
-	  
+    if (count($this->arrContent) < 1) {
+      $strRequest = ampersand(str_replace('&key=export_order', '', $this->Environment->request));
+      $strRequest = ampersand(str_replace('&excel=true', '', $strRequest));
+
       return '<div id="tl_buttons">
-          <a href="'.$strRequest.'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+          <a href="' . $strRequest . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
           </div>
-          <p class="tl_gerror">'. $GLOBALS['TL_LANG']['MSC']['noOrders'] .'</p>';
-    }     
-	  
+          <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
+    }
+
     $strContent = $this->prepareContent();
 
     header('Content-Type: text/csv');
     header('Content-Transfer-Encoding: binary');
-    header('Content-Disposition: attachment; filename="isotope_items_export_' . $this->parseDate($GLOBALS['TL_CONFIG']['dateFormat'], time()) . '_' . $this->parseDate($GLOBALS['TL_CONFIG']['timeFormat'], time()) .'.csv"');
+    header('Content-Disposition: attachment; filename="isotope_items_export_' . $this->parseDate($GLOBALS['TL_CONFIG']['dateFormat'], time()) . '_' . $this->parseDate($GLOBALS['TL_CONFIG']['timeFormat'], time()) . '.csv"');
     header('Content-Length: ' . strlen($strContent));
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
     header('Pragma: public');
@@ -99,195 +99,199 @@ class IsotopeOrderExport extends \Backend
     exit;
   }
 
-  
+
   /**
    * Export orders and send them to browser as file
    * @param DataContainer
    * @return string
    */
   public function exportOrders()
-  {    
+  {
     if ($this->Input->get('key') != 'export_orders') {
       return '';
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
     $arrKeys = array('status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'grandTotal', ' ', ' ', ' ', 'item_sku');
-     
+
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
     }
-   
+
     $objOrders = \Database::getInstance()->query("SELECT *, tl_iso_product_collection.id as collection_id FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' OR document_number IS NOT NULL) ORDER BY document_number ASC");
 
     if (null === $objOrders) {
-       return '<div id="tl_buttons">
-          <a href="'.ampersand(str_replace('&key=export_order', '', $this->Environment->request)).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+      return '<div id="tl_buttons">
+          <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
           </div>
-          <p class="tl_gerror">'. $GLOBALS['TL_LANG']['MSC']['noOrders'] .'</p>';
-    } 
+          <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
+    }
 
     $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");
-    
+
     $arrOrderItems = array();
     $arrOrderSKUs = array();
-    
-    while ($objOrderItems->next()){  
-    // wenn schon ein Produkt da ist, dann einen Zeilenumbruch machen für Excel  
-      if( strlen($arrOrderItems[$objOrderItems->pid]) > 0 ) {
+
+    while ($objOrderItems->next()) {
+      // wenn schon ein Produkt da ist, dann einen Zeilenumbruch machen für Excel  
+      if (strlen($arrOrderItems[$objOrderItems->pid]) > 0) {
         $arrOrderItems[$objOrderItems->pid] .= PHP_EOL;
       }
-          
-      $arrOrderItems[$objOrderItems->pid] .= html_entity_decode( 
-                                        $objOrderItems->quantity . " x " . strip_tags($objOrderItems->name) . " [" . $objOrderItems->sku . "] " .
-                                        " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .  
-                                        " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
-	);
-	$arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku . " ");
-	
+
+      $arrOrderItems[$objOrderItems->pid] .= html_entity_decode(
+        $objOrderItems->quantity . " x " . strip_tags($objOrderItems->name) . " [" . $objOrderItems->sku . "] " .
+        " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .
+        " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
+      );
+      $arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku . " ");
+
     }
 
 
     while ($objOrders->next()) {
-      if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
+      if (isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems)) {
+        continue;
+      }
 
-	    // Check if the order status is 5 or 6 and adjust totals
-    $isNegativeOrder = ($objOrders->order_status == 5 || $objOrders->order_status == 6);
+      // Check if the order status is 5 or 6 and adjust totals
+      $isNegativeOrder = ($objOrders->order_status == 5 || $objOrders->order_status == 6);
 
-    // Adjust the totals if the status is 5 or 6
-    $subTotal = $isNegativeOrder ? -abs($objOrders->subTotal) : $objOrders->subTotal;
-    $taxTotal = $isNegativeOrder ? -abs($objOrders->tax_free_subtotal) : $objOrders->tax_free_subtotal;
-    $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
+      // Adjust the totals if the status is 5 or 6
+      $subTotal = $isNegativeOrder ? -abs($objOrders->subTotal) : $objOrders->subTotal;
+      $taxTotal = $isNegativeOrder ? -abs($objOrders->tax_free_subtotal) : $objOrders->tax_free_subtotal;
+      $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
 
-     // Format as number without prepending quote
-    $subTotalFormatted = number_format($subTotal, 2, ',', '');  // European format (comma for decimal)
-    $taxTotalFormatted = number_format($taxTotal, 2, ',', '');    // European format
-    $grandTotalFormatted = number_format($grandTotal, 2, ',', ''); // European format
-	    
-      $this->arrContent[] = array(   
-  'status'             => $objOrders->order_status, 
-        'order_id'      => $objOrders->document_number,
-        'date'          => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
-        'company'       => $objOrders->company, 
-        'lastname'      => $objOrders->lastname, 
-        'firstname'     => $objOrders->firstname,
-        'street'        => $objOrders->street_1, 
-        'postal'        => $objOrders->postal, 
-        'city'          => $objOrders->city, 
-        'country'       => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
-        'phone'         => $objOrders->phone, 
-        'email'         => $objOrders->email,
-        'items'         => $arrOrderItems[$objOrders->collection_id],
-        'subTotal'       => $subTotalFormatted,  
-        'taxTotal'       => $taxTotalFormatted,  
-        'grandTotal'     => $grandTotalFormatted, 
-        'item_sku'       => $arrOrderSKUs[$objOrders->collection_id], 
-      );         
+      // Format as number without prepending quote
+      $subTotalFormatted = number_format($subTotal, 2, ',', '');  // European format (comma for decimal)
+      $taxTotalFormatted = number_format($taxTotal, 2, ',', '');    // European format
+      $grandTotalFormatted = number_format($grandTotal, 2, ',', ''); // European format
+
+      $this->arrContent[] = array(
+        'status' => $objOrders->order_status,
+        'order_id' => $objOrders->document_number,
+        'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
+        'company' => $objOrders->company,
+        'lastname' => $objOrders->lastname,
+        'firstname' => $objOrders->firstname,
+        'street' => $objOrders->street_1,
+        'postal' => $objOrders->postal,
+        'city' => $objOrders->city,
+        'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+        'phone' => $objOrders->phone,
+        'email' => $objOrders->email,
+        'items' => $arrOrderItems[$objOrders->collection_id],
+        'subTotal' => $subTotalFormatted,
+        'taxTotal' => $taxTotalFormatted,
+        'grandTotal' => $grandTotalFormatted,
+        'item_sku' => $arrOrderSKUs[$objOrders->collection_id],
+      );
     }
-    
+
     // Output
     $this->saveToBrowser();
   }
-  
-  
+
+
   /**
    * Export orders and send them to browser as file
    * @param DataContainer
    */
   public function exportItems()
-  {    
+  {
     if ($this->Input->get('key') != 'export_items') {
       return '';
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
     $arrKeys = array('status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_configuration', 'item_price', 'sum');
-   
+
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
-    } 
-   
+    }
+
     $objOrders = \Database::getInstance()->query("SELECT *, tl_iso_product_collection.id as collection_id FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' OR document_number IS NOT NULL) ORDER BY document_number ASC");
 
     if (null === $objOrders) {
       return '<div id="tl_buttons">
-          <a href="'.ampersand(str_replace('&key=export_order', '', $this->Environment->request)).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+          <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
           </div>
-          <p class="tl_gerror">'. $GLOBALS['TL_LANG']['MSC']['noOrders'] .'</p>';
+          <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
     }
-    
-    $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");      
-    
+
+    $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");
+
     $arrOrderItems = array();
-    while ($objOrderItems->next()) {  
-	  $arrConfig = deserialize($objOrderItems->configuration);
-	  $strConfig = '';
-	  if(is_array($arrConfig)) {
-		foreach ($arrConfig as $key => $value) {
-		  if( strlen($strConfig) > 1 ) {
-			$strConfig .= PHP_EOL;
-		  }	
-		  $arrValues = deserialize($value);
-		  $strConfig .= \Isotope\Translation::get($key) . ": " . (is_array($arrValues) ? implode(",", $arrValues) : \Isotope\Translation::get($value));
-		}	
-	  }	
-		
-		                
+    while ($objOrderItems->next()) {
+      $arrConfig = deserialize($objOrderItems->configuration);
+      $strConfig = '';
+      if (is_array($arrConfig)) {
+        foreach ($arrConfig as $key => $value) {
+          if (strlen($strConfig) > 1) {
+            $strConfig .= PHP_EOL;
+          }
+          $arrValues = deserialize($value);
+          $strConfig .= \Isotope\Translation::get($key) . ": " . (is_array($arrValues) ? implode(",", $arrValues) : \Isotope\Translation::get($value));
+        }
+      }
+
+
       $arrOrderItems[$objOrderItems->pid][] = array
       (
-        'count'         => $objOrderItems->quantity,
-        'item_sku'      => html_entity_decode( $objOrderItems->sku ),
-        'item_name'     => strip_tags(html_entity_decode($objOrderItems->name)),
-        'item_price'    => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->price))),
+        'count' => $objOrderItems->quantity,
+        'item_sku' => html_entity_decode($objOrderItems->sku),
+        'item_name' => strip_tags(html_entity_decode($objOrderItems->name)),
+        'item_price' => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->price))),
         'configuration' => strip_tags(html_entity_decode($strConfig)),
-        'sum'           => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price))),    
-      );    
+        'sum' => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price))),
+      );
     }
 
     while ($objOrders->next()) {
-      if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
-  
+      if (isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems)) {
+        continue;
+      }
+
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
         $this->arrContent[] = array(
-	  
-          'order_id'           => $objOrders->document_number,
-          'date'               => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
-          'company'            => $objOrders->company, 
-          'lastname'           => $objOrders->lastname, 
-          'firstname'          => $objOrders->firstname,
-          'street'             => $objOrders->street_1, 
-          'postal'             => $objOrders->postal, 
-          'city'               => $objOrders->city, 
-          'country'            => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
-          'phone'              => $objOrders->phone, 
-          'email'              => $objOrders->email,
-          'count'              => $item['count'],
-          'item_sku'           => $item['item_sku'],
-          'item_name'          => $item['item_name'],
+
+          'order_id' => $objOrders->document_number,
+          'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
+          'company' => $objOrders->company,
+          'lastname' => $objOrders->lastname,
+          'firstname' => $objOrders->firstname,
+          'street' => $objOrders->street_1,
+          'postal' => $objOrders->postal,
+          'city' => $objOrders->city,
+          'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+          'phone' => $objOrders->phone,
+          'email' => $objOrders->email,
+          'count' => $item['count'],
+          'item_sku' => $item['item_sku'],
+          'item_name' => $item['item_name'],
           'item_configuration' => $item['configuration'],
-          'item_price'         => $item['item_price'],
-          'item_sum'           => $item['sum'],
+          'item_price' => $item['item_price'],
+          'item_sum' => $item['sum'],
         );
-      }         
+      }
     }
-    
+
     // Output
     $this->saveToBrowser();
-  }  
-  
+  }
+
   /**
    * Export orders and send them to browser as file
    * @param DataContainer
    */
   public function exportBank()
-  {    
+  {
     if ($this->Input->get('key') != 'export_bank') {
       return '';
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
     $arrKeys = array('company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email');
-     
+
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
     }
@@ -296,30 +300,30 @@ class IsotopeOrderExport extends \Backend
 
     if (null === $objOrders) {
       return '<div id="tl_buttons">
-          <a href="'.ampersand(str_replace('&key=export_order', '', $this->Environment->request)).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+          <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
           </div>
-          <p class="tl_gerror">'. $GLOBALS['TL_LANG']['MSC']['noOrders'] .'</p>';
+          <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
     }
 
-    while ($objOrders->next()) {      
+    while ($objOrders->next()) {
       $this->arrContent[$objOrders->id] = array(
-        'company'       => $objOrders->company, 
-        'lastname'      => $objOrders->lastname, 
-        'firstname'     => $objOrders->firstname,
-        'street'        => $objOrders->street_1, 
-        'postal'        => $objOrders->postal, 
-        'city'          => $objOrders->city, 
-        'country'       => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
-        'phone'         => $objOrders->phone, 
-        'email'         => $objOrders->email,
-      );       
+        'company' => $objOrders->company,
+        'lastname' => $objOrders->lastname,
+        'firstname' => $objOrders->firstname,
+        'street' => $objOrders->street_1,
+        'postal' => $objOrders->postal,
+        'city' => $objOrders->city,
+        'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+        'phone' => $objOrders->phone,
+        'email' => $objOrders->email,
+      );
     }
-  
+
     // Output
     $this->saveToBrowser();
-  }  
-  
-  
+  }
+
+
   /**
    * Prepare the given array and build the content stream
    *
@@ -332,19 +336,19 @@ class IsotopeOrderExport extends \Backend
     $arrData = array();
 
     // add the header fields if there are some
-    if (count($this->arrHeaderFields)>0) {
+    if (count($this->arrHeaderFields) > 0) {
       $arrData = array($this->arrHeaderFields);
     }
 
     // add all other elements
-    foreach ($this->arrContent as $k=>$v) {
+    foreach ($this->arrContent as $k => $v) {
       //TODO: maybe find a better solution
       $arrData[] = $v;
     }
 
 
     // build the csv string
-    foreach((array) $arrData as $arrRow) {
+    foreach ((array) $arrData as $arrRow) {
       array_walk($arrRow, array($this, 'escapeRow'));
       $strCsv .= $this->strDelimiter . implode($this->strDelimiter . $this->strSeperator . $this->strDelimiter, $arrRow) . $this->strDelimiter . $this->strLineEnd;
     }
@@ -356,7 +360,7 @@ class IsotopeOrderExport extends \Backend
 
     return $strCsv;
   }
-  
+
   /**
    * Escape a row
    *
