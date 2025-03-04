@@ -111,6 +111,8 @@ class IsotopeOrderExport extends \Backend
    * @param DataContainer
    * @return string
    */
+
+   
   public function exportOrders()
   {
     if ($this->Input->get('key') != 'export_orders') {
@@ -146,6 +148,7 @@ class IsotopeOrderExport extends \Backend
 
       $arrOrderSKUs[$orderId][] = $objOrderItems->sku;
       $arrOrderPrices[$orderId][] = Isotope::formatPrice($objOrderItems->price * $objOrderItems->quantity);
+
     }
 
     // Determine max number of items in any order
@@ -195,10 +198,42 @@ class IsotopeOrderExport extends \Backend
         'email' => $objOrders->email,
         'items' => implode(' ', $arrOrderItems[$objOrders->collection_id]),
 
+<<<<<<< HEAD
         //'subTotal' => number_format($objOrders->subTotal, 2, ',', ''),
         'subTotal' => number_format($objOrders->tax_free_subtotal, 2, ',', ''),
         'grandTotal' => number_format($objOrders->total, 2, ',', ''),
       ], array_merge(...array_map(null, $skuColumns, $priceColumns))); // Merge SKU and price columns alternatively
+=======
+     // Format as number without prepending quote
+    $subTotalFormatted = number_format($subTotal, 2, ',', '');  // European format (comma for decimal)
+    $taxTotalFormatted = number_format($taxTotal, 2, ',', '');    // European format
+    $grandTotalFormatted = number_format($grandTotal, 2, ',', ''); // European format
+	    
+      $this->arrContent[] = array(   
+  'status'             => $objOrders->order_status, 
+        'order_id'      => $objOrders->document_number,
+        'date'          => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
+        'company'       => $objOrders->company, 
+        'lastname'      => $objOrders->lastname, 
+        'firstname'     => $objOrders->firstname,
+        'street'        => $objOrders->street_1, 
+        'postal'        => $objOrders->postal, 
+        'city'          => $objOrders->city, 
+        'country'       => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+        'phone'         => $objOrders->phone, 
+        'email'         => $objOrders->email,
+        'items'         => $arrOrderItems[$objOrders->collection_id],
+        'subTotal'       => $subTotalFormatted,  
+        'taxTotal'       => $taxTotalFormatted,  
+        'grandTotal'     => $grandTotalFormatted, 
+        'item_sku'       => $arrOrderSKUs[$objOrders->collection_id],
+
+      );
+
+      //$this->arrContent += ['item_sku' => $arrOrderSKUs[$objOrders->collection_id]];
+
+
+>>>>>>> e09c27852cc62dcbf9b73b7c00a93df766b768a6
     }
 
     // Output
