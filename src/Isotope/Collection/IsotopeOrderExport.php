@@ -85,111 +85,128 @@ class IsotopeOrderExport extends \Backend
           <p class="tl_gerror">'. $GLOBALS['TL_LANG']['MSC']['noOrders'] .'</p>';
     }     
 	  
+    
     $strContent = $this->prepareContent();
 
-    header('Content-Type: text/csv');
+    // Ensure UTF-8 encoding and add BOM for Excel compatibility
+    $bom = chr(0xEF) . chr(0xBB) . chr(0xBF);
+    $strContent = $bom . $strContent; // Prepend BOM to the content to ensure UTF-8
+
     header('Content-Transfer-Encoding: binary');
     header('Content-Disposition: attachment; filename="isotope_items_export_' . $this->parseDate($GLOBALS['TL_CONFIG']['dateFormat'], time()) . '_' . $this->parseDate($GLOBALS['TL_CONFIG']['timeFormat'], time()) .'.csv"');
     header('Content-Length: ' . strlen($strContent));
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
     header('Pragma: public');
+    header('Content-Type: text/html; charset=utf-8');
+
     header('Expires: 0');
 
     echo $strContent;
     exit;
   }
 
-  
+
   /**
    * Export orders and send them to browser as file
    * @param DataContainer
    * @return string
    */
   public function exportOrders()
-  {    
+  {
     if ($this->Input->get('key') != 'export_orders') {
       return '';
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'grandTotal', ' ', ' ', ' ', 'item_sku');
-     
-    foreach ($arrKeys as $v) {
-      $this->arrHeaderFields[$v] = $csvHead[$v];
+    $arrKeys = ['status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'subTotal', 'grandTotal'];
+
+    // Fetch the current year (e.g., '25' for 2025)
+    $currentYear = date('y');  // 'y' gives two digits of the current year (e.g., '25' for 2025)
+
+    // Fetch all order items
+    $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");
+
+    $arrOrderItems = [];
+    $arrOrderSKUs = [];
+    $arrOrderPrices = [];
+
+    while ($objOrderItems->next()) {
+      $orderId = $objOrderItems->pid;
+      if (!isset($arrOrderItems[$orderId])) {
+        $arrOrderItems[$orderId] = [];
+        $arrOrderSKUs[$orderId] = [];
+        $arrOrderPrices[$orderId] = [];
+      }
+
+      $arrOrderItems[$orderId][] = html_entity_decode(
+        $objOrderItems->quantity . " x " . strip_tags($objOrderItems->name) . " [" . $objOrderItems->sku . "] " .
+        " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .
+        " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
+      );
+
+      $arrOrderSKUs[$orderId][] = $objOrderItems->sku;
+      $arrOrderPrices[$orderId][] = Isotope::formatPrice($objOrderItems->price * $objOrderItems->quantity);
     }
-   
-    $objOrders = \Database::getInstance()->query("SELECT *, tl_iso_product_collection.id as collection_id FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' OR document_number IS NOT NULL) ORDER BY document_number ASC");
+
+    // Determine max number of items in any order
+    $maxItems = max(array_map('count', $arrOrderSKUs));
+
+    // Add SKU and price columns dynamically
+    for ($i = 1; $i <= $maxItems; $i++) {
+      $arrKeys[] = "Artikelnummer_$i";
+      $arrKeys[] = "Preis_Gesamt_$i";
+    }
+
+    foreach ($arrKeys as $v) {
+      $this->arrHeaderFields[$v] = $csvHead[$v] ?? $v;
+    }
+
+    // Fetch orders
+    $objOrders = \Database::getInstance()->query("SELECT *, tl_iso_product_collection.id as collection_id FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND (document_number != '' OR document_number IS NOT NULL) AND document_number LIKE '$currentYear%'  -- Filter by current year in document_number ORDER BY document_number ASC");
 
     if (null === $objOrders) {
-       return '<div id="tl_buttons">
-          <a href="'.ampersand(str_replace('&key=export_order', '', $this->Environment->request)).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBT']).'">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
-          </div>
-          <p class="tl_gerror">'. $GLOBALS['TL_LANG']['MSC']['noOrders'] .'</p>';
-    } 
-
-    $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");
-    
-    $arrOrderItems = array();
-    $arrOrderSKUs = array();
-    
-    while ($objOrderItems->next()){  
-    // wenn schon ein Produkt da ist, dann einen Zeilenumbruch machen für Excel  
-      if( strlen($arrOrderItems[$objOrderItems->pid]) > 0 ) {
-        $arrOrderItems[$objOrderItems->pid] .= PHP_EOL;
-      }
-          
-      $arrOrderItems[$objOrderItems->pid] .= html_entity_decode( 
-                                        $objOrderItems->quantity . " x " . strip_tags($objOrderItems->name) . " [" . $objOrderItems->sku . "] " .
-                                        " á " . strip_tags(Isotope::formatPrice($objOrderItems->price)) .  
-                                        " (" . strip_tags(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price)) . ")"
-	);
-	$arrOrderSKUs[$objOrderItems->pid] .= ($objOrderItems->sku . " ");
-	
+      return '<div id="tl_buttons">
+            <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
+            </div>
+            <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
     }
-
 
     while ($objOrders->next()) {
-      if( isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems) ) { continue; }
+      if (!isset($arrOrderItems[$objOrders->collection_id])) {
+        continue;
+      }
 
-	    // Check if the order status is 5 or 6 and adjust totals
-    $isNegativeOrder = ($objOrders->order_status == 5 || $objOrders->order_status == 6);
+      // Prepare SKU and price columns
+      $skuColumns = array_pad($arrOrderSKUs[$objOrders->collection_id], $maxItems, ''); // Fill missing columns with empty strings
+      $priceColumns = array_pad($arrOrderPrices[$objOrders->collection_id], $maxItems, '');
 
-    // Adjust the totals if the status is 5 or 6
-    $subTotal = $isNegativeOrder ? -abs($objOrders->subTotal) : $objOrders->subTotal;
-    $taxTotal = $isNegativeOrder ? -abs($objOrders->tax_free_subtotal) : $objOrders->tax_free_subtotal;
-    $grandTotal = $isNegativeOrder ? -abs($objOrders->total) : $objOrders->total;
+      $this->arrContent[] = array_merge([
+        'status' => $objOrders->order_status,
+        'order_id' => $objOrders->document_number,
+        'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
+        'company' => $objOrders->company,
+        'lastname' => $objOrders->lastname,
+        'firstname' => $objOrders->firstname,
+        'street' => $objOrders->street_1,
+        'postal' => $objOrders->postal,
+        'city' => $objOrders->city,
+        'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+        'phone' => $objOrders->phone,
+        'email' => $objOrders->email,
+        'items' => implode(' ', $arrOrderItems[$objOrders->collection_id]),
 
-     // Format as number without prepending quote
-    $subTotalFormatted = number_format($subTotal, 2, ',', '');  // European format (comma for decimal)
-    $taxTotalFormatted = number_format($taxTotal, 2, ',', '');    // European format
-    $grandTotalFormatted = number_format($grandTotal, 2, ',', ''); // European format
-	    
-      $this->arrContent[] = array(   
-  'status'             => $objOrders->order_status, 
-        'order_id'      => $objOrders->document_number,
-        'date'          => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
-        'company'       => $objOrders->company, 
-        'lastname'      => $objOrders->lastname, 
-        'firstname'     => $objOrders->firstname,
-        'street'        => $objOrders->street_1, 
-        'postal'        => $objOrders->postal, 
-        'city'          => $objOrders->city, 
-        'country'       => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
-        'phone'         => $objOrders->phone, 
-        'email'         => $objOrders->email,
-        'items'         => $arrOrderItems[$objOrders->collection_id],
-        'subTotal'       => $subTotalFormatted,  
-        'taxTotal'       => $taxTotalFormatted,  
-        'grandTotal'     => $grandTotalFormatted, 
-        'item_sku'       => $arrOrderSKUs[$objOrders->collection_id], 
-      );         
+        //'subTotal' => number_format($objOrders->subTotal, 2, ',', ''),
+        'subTotal' => number_format($objOrders->tax_free_subtotal, 2, ',', ''),
+        'grandTotal' => number_format($objOrders->total, 2, ',', ''),
+      ], array_merge(...array_map(null, $skuColumns, $priceColumns))); // Merge SKU and price columns alternatively
     }
-    
+
     // Output
     $this->saveToBrowser();
   }
-  
-  
+
+
+
   /**
    * Export orders and send them to browser as file
    * @param DataContainer
