@@ -198,12 +198,12 @@ class IsotopeOrderExport extends \Backend
         'email' => $objOrders->email,
         'items' => implode(' ', $arrOrderItems[$objOrders->collection_id]),
 
-<<<<<<< HEAD
+
         //'subTotal' => number_format($objOrders->subTotal, 2, ',', ''),
         'subTotal' => number_format($objOrders->tax_free_subtotal, 2, ',', ''),
         'grandTotal' => number_format($objOrders->total, 2, ',', ''),
       ], array_merge(...array_map(null, $skuColumns, $priceColumns))); // Merge SKU and price columns alternatively
-=======
+
      // Format as number without prepending quote
     $subTotalFormatted = number_format($subTotal, 2, ',', '');  // European format (comma for decimal)
     $taxTotalFormatted = number_format($taxTotal, 2, ',', '');    // European format
@@ -232,8 +232,6 @@ class IsotopeOrderExport extends \Backend
 
       //$this->arrContent += ['item_sku' => $arrOrderSKUs[$objOrders->collection_id]];
 
-
->>>>>>> e09c27852cc62dcbf9b73b7c00a93df766b768a6
     }
 
     // Output
