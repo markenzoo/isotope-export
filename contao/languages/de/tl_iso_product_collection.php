@@ -16,7 +16,7 @@
  */
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['status']              = "Bestell Status";  
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['order_id']            = "Bestell-ID";  
-$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['date'  ]              = "Zeitpunkt der Bestellung";  
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['date']               = "Zeitpunkt der Bestellung";  
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['company']             = "Firma";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['lastname']            = "Name";  
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['firstname']           = "Vorname";  
@@ -36,6 +36,12 @@ $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax']             
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price']          = "Einzelpreis";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_configuration']  = "Konfiguration";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['sum']                 = "Summe";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['total_price']         = "Gesamtpreis";  // Total Shipping Cost
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax']                 = "MwSt.";  // Shipping Tax
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['final_price']         = "Endpreis";  // Final Price (after tax)
+
+
+
 
 /**
  * Legends

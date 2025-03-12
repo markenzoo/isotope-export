@@ -218,21 +218,23 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_configuration', 'item_price', 'sum');
+    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'total_price', 'tax', 'final_price', 'sum');
 
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
     }
 
-    $objOrders = \Database::getInstance()->query("SELECT *, tl_iso_product_collection.id as collection_id FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' OR document_number IS NOT NULL) ORDER BY document_number ASC");
+    // Fetch orders
+    $objOrders = \Database::getInstance()->query("SELECT *, tl_iso_product_collection.id as collection_id FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND (document_number != '' OR document_number IS NOT NULL) ORDER BY document_number ASC");
 
     if (null === $objOrders) {
       return '<div id="tl_buttons">
-          <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
-          </div>
-          <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
+                    <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
+                    </div>
+                    <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
     }
 
+    // Fetch order items
     $objOrderItems = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_item");
 
     $arrOrderItems = array();
@@ -249,26 +251,96 @@ class IsotopeOrderExport extends \Backend
         }
       }
 
-
-      $arrOrderItems[$objOrderItems->pid][] = array
-      (
+      // Store order items by order ID
+      $arrOrderItems[$objOrderItems->pid][] = array(
         'count' => $objOrderItems->quantity,
         'item_sku' => html_entity_decode($objOrderItems->sku),
         'item_name' => strip_tags(html_entity_decode($objOrderItems->name)),
-        'item_price' => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->price))),
+        'item_price' => Isotope::formatPrice($objOrderItems->price),
         'configuration' => strip_tags(html_entity_decode($strConfig)),
-        'sum' => strip_tags(html_entity_decode(Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price))),
+        'sum' => Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price),
       );
     }
 
-    while ($objOrders->next()) {
-      if (isset($arrOrderItems) && is_array($arrOrderItems) && !array_key_exists($objOrders->collection_id, $arrOrderItems)) {
-        continue;
+    // Fetch surcharges (shipping and tax)
+    $objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type IN ('shipping', 'tax')");
+
+    $arrSurcharges = [];
+    while ($objSurcharges->next()) {
+      $arrSurcharges[$objSurcharges->pid][$objSurcharges->type] = [
+        'price' => $objSurcharges->price,
+        'total_price' => $objSurcharges->total_price,
+        'tax' => $objSurcharges->tax
+      ];
+    }
+
+    // Include shipping surcharge and apply tax from tax surcharge
+    foreach ($arrSurcharges as $pid => $surcharge) {
+      if (isset($surcharge['shipping']) && isset($surcharge['tax'])) {
+        $shipping_total_price = (float) str_replace(',', '.', $surcharge['shipping']['total_price']);  // Convert to float, fix German comma system
+        $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;  // Shipping tax
+
+        // Extract the numeric value of the tax rate
+        $tax_rate = isset($surcharge['tax']['price']) ? (float) str_replace('%', '', $surcharge['tax']['price']) / 100 : 0;  // Tax rate
+
+        // Calculate final price including tax only if tax is not 0
+        $final_price = $shipping_total_price;
+        if ($tax_rate > 0) {
+          $final_price += $shipping_total_price * $tax_rate;
+        }
+
+        // Ensure final price is a float before rounding
+        $final_price = round($final_price, 2);
+
+        // Add the shipping surcharge as an item with tax applied
+        $arrOrderItems[$pid][] = array(
+          'count' => 1,
+          'item_sku' => '',
+          'item_name' => 'Versandkosten',  // Name for export
+          'item_price' => Isotope::formatPrice($shipping_total_price),
+          'tax_rate' => $tax_rate * 100,  // Show tax rate as 0, 7, or 19
+          'item_price_with_tax' => $tax_rate > 0 ? Isotope::formatPrice($final_price) : Isotope::formatPrice($shipping_total_price),
+          'sum' => Isotope::formatPrice($final_price),
+        );
       }
+    }
 
+    // Compile data for export
+    while ($objOrders->next()) {
+      // Check if the order_id (Bestell-Id) is not empty and it has shipping surcharge items
+      if (!isset($arrOrderItems[$objOrders->collection_id]) || empty($objOrders->document_number)) {
+        continue;  // Skip this order if order_id is empty or no shipping surcharge exists
+      }
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
-        $this->arrContent[] = array(
+        // Fetch the tax surcharge for each item (similar to the shipping surcharge)
+        $tax_rate = 0;  // Default tax rate is 0
+        $item_tax = 0;  // Default tax amount is 0
+        if (isset($arrSurcharges[$objOrders->collection_id]['tax'])) {
+          $tax_rate = (float) str_replace('%', '', $arrSurcharges[$objOrders->collection_id]['tax']['price']) / 100;
+          $item_tax = $item['item_price'] * $tax_rate; // Item's tax value
+        }
 
+        // Ensure the item price is treated as a float for accurate calculation
+       // $item_price = (float) str_replace(',', '.', $item['item_price']);  // Fix comma issue for item price
+        $item_price = (float) str_replace(',00', '', $item['item_price']);
+
+        // If the item price is not zero, calculate final price with tax
+        if ($item_price > 0) {
+          // Calculate final price with tax for the item (only if tax is not 0)
+          $item_price_with_tax = $item_price; // Start with the base price
+          if ($tax_rate > 0) {
+            $item_price_with_tax += $item_tax;
+          }
+
+          // Round item price with tax to 2 decimal places
+          $item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
+                } else {
+          // If item price is zero, just set it to zero
+          $item_price_with_tax = 0;
+        }
+
+        // Add product item to export content
+        $this->arrContent[] = array(
           'order_id' => $objOrders->document_number,
           'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
           'company' => $objOrders->company,
@@ -283,60 +355,29 @@ class IsotopeOrderExport extends \Backend
           'count' => $item['count'],
           'item_sku' => $item['item_sku'],
           'item_name' => $item['item_name'],
-          'item_configuration' => $item['configuration'],
           'item_price' => $item['item_price'],
-          'item_sum' => $item['sum'],
+          'item_price_with_tax' => $item_price_with_tax, // New column for price with tax
+          'tax_rate' => $tax_rate * 100, // Tax rate as 0, 7, or 19
+          'total_price' => $item['total_price'] ?? '',
+          'tax' => $item['tax'] ?? '',
+          'sum' => $item['sum'],
         );
       }
     }
 
-    // Output
+    // Output CSV file
     $this->saveToBrowser();
   }
 
-  /**
-   * Export orders and send them to browser as file
-   * @param DataContainer
-   */
-  public function exportBank()
-  {
-    if ($this->Input->get('key') != 'export_bank') {
-      return '';
-    }
 
-    $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email');
 
-    foreach ($arrKeys as $v) {
-      $this->arrHeaderFields[$v] = $csvHead[$v];
-    }
 
-    $objOrders = \Database::getInstance()->query("SELECT tl_iso_address.* FROM tl_iso_product_collection, tl_iso_address WHERE tl_iso_product_collection.billing_address_id = tl_iso_address.id AND ( document_number != '' AND document_number IS NOT NULL) GROUP BY member");
 
-    if (null === $objOrders) {
-      return '<div id="tl_buttons">
-          <a href="' . ampersand(str_replace('&key=export_order', '', $this->Environment->request)) . '" class="header_back" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['backBT']) . '">' . $GLOBALS['TL_LANG']['MSC']['backBT'] . '</a>
-          </div>
-          <p class="tl_gerror">' . $GLOBALS['TL_LANG']['MSC']['noOrders'] . '</p>';
-    }
 
-    while ($objOrders->next()) {
-      $this->arrContent[$objOrders->id] = array(
-        'company' => $objOrders->company,
-        'lastname' => $objOrders->lastname,
-        'firstname' => $objOrders->firstname,
-        'street' => $objOrders->street_1,
-        'postal' => $objOrders->postal,
-        'city' => $objOrders->city,
-        'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
-        'phone' => $objOrders->phone,
-        'email' => $objOrders->email,
-      );
-    }
 
-    // Output
-    $this->saveToBrowser();
-  }
+
+
+
 
 
   /**
