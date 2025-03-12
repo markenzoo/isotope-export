@@ -118,7 +118,7 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = ['status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'subTotal', 'grandTotal'];
+    $arrKeys = ['order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'subTotal', 'grandTotal'];
 
     // Fetch the current year (e.g., '25' for 2025)
     $currentYear = date('y');  // 'y' gives two digits of the current year (e.g., '25' for 2025)
@@ -153,8 +153,8 @@ class IsotopeOrderExport extends \Backend
 
     // Add SKU and price columns dynamically
     for ($i = 1; $i <= $maxItems; $i++) {
-      $arrKeys[] = "Artikelnummer_$i";
-      $arrKeys[] = "Preis_Gesamt_$i";
+      $arrKeys[] = "Artikelnummer $i";
+      $arrKeys[] = "Preis Gesamt $i";
     }
 
     foreach ($arrKeys as $v) {
@@ -181,7 +181,7 @@ class IsotopeOrderExport extends \Backend
       $priceColumns = array_pad($arrOrderPrices[$objOrders->collection_id], $maxItems, '');
 
       $this->arrContent[] = array_merge([
-        'status' => $objOrders->order_status,
+        //'status' => $objOrders->order_status,
         'order_id' => $objOrders->document_number,
         'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
         'company' => $objOrders->company,
