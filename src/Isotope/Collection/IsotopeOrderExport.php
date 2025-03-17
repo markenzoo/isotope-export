@@ -321,14 +321,17 @@ class IsotopeOrderExport extends \Backend
         }
 
       // Calculate Item Tax and Item Price with Tax
-      $item_price = (float) strtr($item['item_price'], array('.' => ',', ',' => '.'));
+      $item_price = (float) strtr($item['item_price'], array('.' => '', ',' => '.'));
       $item_tax = (float) $item_price * $tax_rate;
-      $item_price_with_tax = $item_price + $item_tax;
 
-      // Round item price with tax to 2 decimal places
-      $item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
-      $item_tax = number_format($item_tax, 2, ',', '.');
+      $item_price_with_tax = (float) $item_price + $item_tax;
 
+      $formatted_item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
+      $formatted_item_tax = number_format($item_tax, 2, ',', '.');
+
+      $final_price = $item_price_with_tax * $item['count'];
+      $final_price = number_format($final_price, 2, ',', '.');
+      
         // Add product item to export content
         $this->arrContent[] = array(
           'order_id' => $objOrders->document_number,
@@ -346,10 +349,10 @@ class IsotopeOrderExport extends \Backend
           'item_sku' => $item['item_sku'],
           'item_name' => $item['item_name'],
           'item_price' => $item['item_price'],
-          'item_price_with_tax' => $item_price_with_tax, // New column for price with tax
+          'item_price_with_tax' => $formatted_item_price_with_tax, // New column for price with tax
           'tax_rate' => $tax_rate * 100, // Tax rate as 0, 7, or 19
-          'tax' => $item_tax ?? '',
-          'final_price' => $item['final_price'] ?? '',
+          'tax' => $formatted_item_tax ?? '',
+          'final_price' => $final_price ?? '',
           'sum' => $item['sum'],
         );
 
@@ -359,14 +362,6 @@ class IsotopeOrderExport extends \Backend
     // Output CSV file
     $this->saveToBrowser();
   }
-
-
-
-
-
-
-
-
 
 
 
