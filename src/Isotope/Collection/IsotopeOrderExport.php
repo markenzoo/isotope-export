@@ -317,27 +317,17 @@ class IsotopeOrderExport extends \Backend
         $item_tax = 0;  // Default tax amount is 0
         if (isset($arrSurcharges[$objOrders->collection_id]['tax'])) {
           $tax_rate = (float) str_replace('%', '', $arrSurcharges[$objOrders->collection_id]['tax']['price']) / 100;
-          $item_tax = $item['item_price'] * $tax_rate; // Item's tax value
+          //$item_tax = $item['item_price'] * $tax_rate; // Item's tax value
         }
 
-        // Ensure the item price is treated as a float for accurate calculation
-       // $item_price = (float) str_replace(',', '.', $item['item_price']);  // Fix comma issue for item price
-        $item_price = (float) str_replace(',00', '', $item['item_price']);
+      // Calculate Item Tax and Item Price with Tax
+      $item_price = (float) strtr($item['item_price'], array('.' => ',', ',' => '.'));
+      $item_tax = (float) $item_price * $tax_rate;
+      $item_price_with_tax = $item_price + $item_tax;
 
-        // If the item price is not zero, calculate final price with tax
-        if ($item_price > 0) {
-          // Calculate final price with tax for the item (only if tax is not 0)
-          $item_price_with_tax = $item_price; // Start with the base price
-          if ($tax_rate > 0) {
-            $item_price_with_tax += $item_tax;
-          }
-
-          // Round item price with tax to 2 decimal places
-          $item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
-                } else {
-          // If item price is zero, just set it to zero
-          $item_price_with_tax = 0;
-        }
+      // Round item price with tax to 2 decimal places
+      $item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
+      $item_tax = number_format($item_tax, 2, ',', '.');
 
         // Add product item to export content
         $this->arrContent[] = array(
@@ -358,10 +348,11 @@ class IsotopeOrderExport extends \Backend
           'item_price' => $item['item_price'],
           'item_price_with_tax' => $item_price_with_tax, // New column for price with tax
           'tax_rate' => $tax_rate * 100, // Tax rate as 0, 7, or 19
-          'total_price' => $item['total_price'] ?? '',
-          'tax' => $item['tax'] ?? '',
+          'tax' => $item_tax ?? '',
+          'final_price' => $item['final_price'] ?? '',
           'sum' => $item['sum'],
         );
+
       }
     }
 
