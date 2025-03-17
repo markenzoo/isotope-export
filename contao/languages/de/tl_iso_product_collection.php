@@ -33,13 +33,13 @@ $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_sku']        
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_name']           = "Produktbezeichnung";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['subTotal']            = "Nettopreis";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax']                 = "MwSt.";
-$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price']          = "Einzelpreis";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price']          = "Einzelpreis Netto";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_configuration']  = "Konfiguration";
-$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['sum']                 = "Summe";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['sum']                 = "Gesamt Netto";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['total_price']         = "Gesamtpreis";  // Total Shipping Cost
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax']                 = "MwSt.";  // Shipping Tax
-$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['final_price']         = "Endpreis";  // Final Price (after tax)
-$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price_with_tax'] = "Einzelpreis mit MwSt.";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['final_price']         = "Gesamt Brutto";  // Final Price (after tax)
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price_with_tax'] = "Einzelpreis Brutto";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax_rate']            = "MwSt.-Satz";
 
 
