@@ -39,6 +39,8 @@ $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['sum']             
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['total_price']         = "Gesamtpreis";  // Total Shipping Cost
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax']                 = "MwSt.";  // Shipping Tax
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['final_price']         = "Endpreis";  // Final Price (after tax)
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price_with_tax'] = "Einzelpreis mit MwSt.";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax_rate']            = "MwSt.-Satz";
 
 
 
