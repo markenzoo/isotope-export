@@ -335,6 +335,12 @@ class IsotopeOrderExport extends \Backend
       $sum = $item['sum'];
       $price = $item['item_price'];
 
+      $sku = $item['item_sku'];
+
+      if($item['item_name'] == "Versandkosten") {
+        $sku = "84160";
+      }
+
       //Add Minus to Stornorechnungen
       if($objOrders->order_status == "5") {
         $formatted_item_price_with_tax = "-" . $formatted_item_price_with_tax;
@@ -359,7 +365,7 @@ class IsotopeOrderExport extends \Backend
           'phone' => $objOrders->phone,
           'email' => $objOrders->email,
           'count' => $item['count'],
-          'item_sku' => $item['item_sku'],
+          'item_sku' => $sku,
           'item_name' => $item['item_name'],
           'item_price' => $price,
           'item_price_with_tax' => $formatted_item_price_with_tax, // New column for price with tax
