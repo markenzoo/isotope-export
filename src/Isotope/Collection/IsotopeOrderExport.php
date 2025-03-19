@@ -335,6 +335,8 @@ class IsotopeOrderExport extends \Backend
       $sum = $item['sum'];
       $price = $item['item_price'];
 
+
+      //Add SKU to Shipping
       $sku = $item['item_sku'];
 
       if($item['item_name'] == "Versandkosten") {
