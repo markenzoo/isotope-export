@@ -218,7 +218,7 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum');
+    $arrKeys = array('order_status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum');
 
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
@@ -331,9 +331,22 @@ class IsotopeOrderExport extends \Backend
 
       $final_price = $item_price_with_tax * $item['count'];
       $final_price = number_format($final_price, 2, ',', '.');
-      
+
+      $sum = $item['sum'];
+      $price = $item['item_price'];
+
+      //Add Minus to Stornorechnungen
+      if($objOrders->order_status == "5") {
+        $formatted_item_price_with_tax = "-" . $formatted_item_price_with_tax;
+        $formatted_item_tax = "-" . $formatted_item_tax;
+        $final_price = "-" . $final_price;
+        $sum = "-" . $sum;
+        $price = "-" . $price;
+      }
+
         // Add product item to export content
         $this->arrContent[] = array(
+          'status' => $objOrders->order_status, 
           'order_id' => $objOrders->document_number,
           'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
           'company' => $objOrders->company,
@@ -348,12 +361,12 @@ class IsotopeOrderExport extends \Backend
           'count' => $item['count'],
           'item_sku' => $item['item_sku'],
           'item_name' => $item['item_name'],
-          'item_price' => $item['item_price'],
+          'item_price' => $price,
           'item_price_with_tax' => $formatted_item_price_with_tax, // New column for price with tax
           'tax_rate' => $tax_rate * 100, // Tax rate as 0, 7, or 19
           'tax' => $formatted_item_tax ?? '',
           'final_price' => $final_price ?? '',
-          'sum' => $item['sum'],
+          'sum' => $sum,
         );
 
       }
