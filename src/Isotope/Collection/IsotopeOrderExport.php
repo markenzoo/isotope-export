@@ -218,7 +218,7 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('order_status', 'order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum');
+    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum');
 
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
