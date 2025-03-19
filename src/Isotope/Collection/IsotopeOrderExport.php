@@ -354,7 +354,6 @@ class IsotopeOrderExport extends \Backend
 
         // Add product item to export content
         $this->arrContent[] = array(
-          'status' => $objOrders->order_status, 
           'order_id' => $objOrders->document_number,
           'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
           'company' => $objOrders->company,
