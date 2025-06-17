@@ -300,7 +300,7 @@ class IsotopeOrderExport extends \Backend
           'item_price' => Isotope::formatPrice($shipping_total_price),
           'tax_rate' => $tax_rate * 100,  // Show tax rate as 0, 7, or 19
           'item_price_with_tax' => $tax_rate > 0 ? Isotope::formatPrice($final_price) : Isotope::formatPrice($shipping_total_price),
-          'sum' => Isotope::formatPrice($final_price),
+          'sum' => 5,
         );
       }
     }
