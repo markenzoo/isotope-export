@@ -274,36 +274,48 @@ class IsotopeOrderExport extends \Backend
       ];
     }
 
-    // Include shipping surcharge and apply tax from tax surcharge
-    foreach ($arrSurcharges as $pid => $surcharge) {
-      if (isset($surcharge['shipping']) && isset($surcharge['tax'])) {
-        $shipping_total_price = (float) str_replace(',', '.', $surcharge['shipping']['total_price']);  // Convert to float, fix German comma system
-        $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;  // Shipping tax
+// Include shipping surcharge and apply correct tax based on tax_class
+foreach ($arrSurcharges as $pid => $surcharge) {
+  if (isset($surcharge['shipping'])) {
+    $shipping_total_price = (float) str_replace(',', '.', $surcharge['shipping']['total_price']);  // Gross
+    $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;
 
-        // Extract the numeric value of the tax rate
-        $tax_rate = isset($surcharge['tax']['price']) ? (float) str_replace('%', '', $surcharge['tax']['price']) / 100 : 0;  // Tax rate
-
-        // Calculate final price including tax only if tax is not 0
-        $final_price = $shipping_total_price;
-        if ($tax_rate > 0) {
-          $final_price += $shipping_total_price * $tax_rate;
-        }
-
-        // Ensure final price is a float before rounding
-        $final_price = round($final_price, 2);
-
-        // Add the shipping surcharge as an item with tax applied
-        $arrOrderItems[$pid][] = array(
-          'count' => 1,
-          'item_sku' => '',
-          'item_name' => 'Versandkosten',  // Name for export
-          'item_price' => Isotope::formatPrice($shipping_total_price),
-          'tax_rate' => $tax_rate * 100,  // Show tax rate as 0, 7, or 19
-          'item_price_with_tax' => $tax_rate > 0 ? Isotope::formatPrice($final_price) : Isotope::formatPrice($shipping_total_price),
-          'sum' => 5,
-        );
+    // Determine tax rate based on tax_class
+    $tax_rate = 0.00; // default fallback
+    if (isset($surcharge['shipping']['tax_class'])) {
+      switch ((int) $surcharge['shipping']['tax_class']) {
+        case 2:
+          $tax_rate = 0.19;
+          break;
+        case 4:
+          $tax_rate = 0.07;
+          break;
+        default:
+          $tax_rate = 0.00;
       }
     }
+
+    // Calculate price including tax
+    $final_price = $shipping_total_price;
+    if ($tax_rate > 0) {
+      $final_price += $shipping_total_price * $tax_rate;
+    }
+
+    $final_price = round($final_price, 2);
+
+    // Add the shipping surcharge as an item with tax applied
+    $arrOrderItems[$pid][] = array(
+      'count' => 1,
+      'item_sku' => '',
+      'item_name' => 'Versandkosten',
+      'item_price' => Isotope::formatPrice($shipping_total_price),
+      'tax_rate' => $tax_rate * 100,  // Show as 0, 7, or 19
+      'item_price_with_tax' => Isotope::formatPrice($final_price),
+      'sum' => 5,
+    );
+  }
+}
+
 
     // Compile data for export
     while ($objOrders->next()) {
