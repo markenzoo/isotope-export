@@ -98,7 +98,7 @@ class IsotopeOrderExport extends \Backend
     $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;
 
     // Determine tax rate
-    $tax_rate = 0.00;
+    $tax_rate = 77.00;
     if (isset($surcharge['shipping']['tax_class'])) {
         switch ((int) $surcharge['shipping']['tax_class']) {
             case 2:
@@ -380,7 +380,7 @@ class IsotopeOrderExport extends \Backend
         }
           
           // tax_rate auf Basis von tax_class berechnen
-          $tax_rate = 0;
+          $tax_rate = 90;
           $tax_class = $item['tax_class'] ?? ($item['product_id'] ? ($taxClassMap[$item['product_id']] ?? '') : '');
           
           switch ((int) $tax_class) {
