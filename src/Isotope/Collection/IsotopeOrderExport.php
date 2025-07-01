@@ -332,9 +332,9 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       'item_sku' => '',
       'item_name' => 'Versandkosten',
       'item_price' => Isotope::formatPrice($shipping_total_price),
+      'tax_rate' => $tax_rate * 100,  // Show as 0, 7, or 19
       'item_price_with_tax' => Isotope::formatPrice($final_price),
       'sum' => 5,
-      'tax_class' => 2,
     );
   }
 }
@@ -343,6 +343,9 @@ foreach ($arrSurcharges as $pid => $surcharge) {
 
     // Compile data for export
     while ($objOrders->next()) {
+       
+      if (!isset($surcharge['shipping'])) {
+
       // Check if the order_id (Bestell-Id) is not empty and it has shipping surcharge items
       if (!isset($arrOrderItems[$objOrders->collection_id]) || empty($objOrders->document_number)) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
@@ -421,7 +424,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
         );
 
       }
-    }
+    }}
 
     // Output CSV file
     $this->saveToBrowser();
