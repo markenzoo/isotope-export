@@ -354,25 +354,24 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
 
         // Skip Versandkosten – sie wurden vorher schon berechnet
-        if ($item['item_name'] === 'Versandkosten') {
-          continue;
+        if ($item['item_name'] !== 'Versandkosten') {
+          
+          // tax_rate auf Basis von tax_class berechnen
+          $tax_rate = 0;
+          $tax_class = $item['tax_class'] ?? ($item['product_id'] ? ($taxClassMap[$item['product_id']] ?? '') : '');
+          
+          switch ((int) $tax_class) {
+            case 2:
+              $tax_rate = 0.19;
+              break;
+            case 4:
+              $tax_rate = 0.07;
+              break;
+            default:
+              $tax_rate = 0.00;
+          }
         }
-        
-        // tax_rate auf Basis von tax_class berechnen
-        $tax_rate = 0;
-        $tax_class = $item['tax_class'] ?? ($item['product_id'] ? ($taxClassMap[$item['product_id']] ?? '') : '');
-        
-        switch ((int) $tax_class) {
-          case 2:
-            $tax_rate = 0.19;
-            break;
-          case 4:
-            $tax_rate = 0.07;
-            break;
-          default:
-            $tax_rate = 0.00;
-        }
-
+      
       // Calculate Item Tax and Item Price with Tax
       $item_price = (float) strtr($item['item_price'], array('.' => '', ',' => '.'));
       $item_tax = (float) $item_price * $tax_rate;
