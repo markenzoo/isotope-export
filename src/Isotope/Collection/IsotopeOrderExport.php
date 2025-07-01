@@ -344,8 +344,9 @@ foreach ($arrSurcharges as $pid => $surcharge) {
     // Compile data for export
     while ($objOrders->next()) {
        
-      if (!isset($surcharge['shipping'])) {
-
+      if (!isset($arrSurcharges[$objOrders->collection_id]['shipping'])) {
+        continue;
+      }
       // Check if the order_id (Bestell-Id) is not empty and it has shipping surcharge items
       if (!isset($arrOrderItems[$objOrders->collection_id]) || empty($objOrders->document_number)) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
@@ -424,7 +425,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
         );
 
       }
-    }}
+    }
 
     // Output CSV file
     $this->saveToBrowser();
