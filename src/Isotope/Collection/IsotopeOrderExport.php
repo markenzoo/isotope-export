@@ -88,6 +88,44 @@ class IsotopeOrderExport extends \Backend
       return $arrTaxClasses;
   }
 
+  protected function getShippingSurchargeItem(array $surcharge, int $pid): ?array
+{
+    if (!isset($surcharge['shipping'])) {
+        return null;
+    }
+
+    $shipping_total_price = (float) str_replace(',', '.', $surcharge['shipping']['total_price']);
+    $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;
+
+    // Determine tax rate
+    $tax_rate = 0.00;
+    if (isset($surcharge['shipping']['tax_class'])) {
+        switch ((int) $surcharge['shipping']['tax_class']) {
+            case 2:
+                $tax_rate = 0.19;
+                break;
+            case 4:
+                $tax_rate = 0.07;
+                break;
+            default:
+                $tax_rate = 0.00;
+        }
+    }
+
+    // Calculate final price with tax
+    $final_price = $shipping_total_price + $shipping_tax;
+
+    return [
+        'count' => 1,
+        'item_sku' => '',
+        'item_name' => 'Versandkosten',
+        'item_price' => Isotope::formatPrice($shipping_total_price),
+        'item_price_with_tax' => Isotope::formatPrice($final_price),
+        'tax_rate' => $tax_rate * 100,
+        'sum' => Isotope::formatPrice($shipping_total_price),
+        'tax_class' => $surcharge['shipping']['tax_class'] ?? ''
+    ];
+}
 
   /**
    * Generate the csv file and send it to the browser
@@ -299,48 +337,12 @@ class IsotopeOrderExport extends \Backend
       ];
     }
 
-// Include shipping surcharge and apply correct tax based on tax_class
-foreach ($arrSurcharges as $pid => $surcharge) {
-  if (isset($surcharge['shipping'])) {
-    $shipping_total_price = (float) str_replace(',', '.', $surcharge['shipping']['total_price']);  // Gross
-    $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;
-
-    // Determine tax rate based on tax_class
-    $tax_rate = 0.00; // default fallback
-    if (isset($surcharge['shipping']['tax_class'])) {
-      switch ((int) $surcharge['shipping']['tax_class']) {
-        case 2:
-          $tax_rate = 0.19;
-          break;
-        case 4:
-          $tax_rate = 0.07;
-          break;
-        default:
-          $tax_rate = 0.00;
-      }
+ foreach ($arrSurcharges as $pid => $surcharge) {
+    $shippingItem = $this->getShippingSurchargeItem($surcharge, $pid);
+    if ($shippingItem !== null) {
+        $arrOrderItems[$pid][] = $shippingItem;
     }
-
-    // Calculate price including tax
-    $final_price = $shipping_total_price;
-    if ($tax_rate > 0) {
-      $final_price += $shipping_total_price * $tax_rate;
-    }
-
-    $final_price = round($final_price, 2);
-
-    // Add the shipping surcharge as an item with tax applied
-    $arrOrderItems[$pid][] = array(
-      'count' => 1,
-      'item_sku' => '',
-      'item_name' => 'Versandkosten',
-      'item_price' => Isotope::formatPrice($shipping_total_price),
-      'tax_rate' => $tax_rate * 100,  // Show as 0, 7, or 19
-      'item_price_with_tax' => Isotope::formatPrice($final_price),
-      'sum' => 5,
-    );
-  }
 }
-
 
 
     // Compile data for export
@@ -389,7 +391,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
               $tax_rate = 0.07;
               break;
             default:
-              $tax_rate = 0.00;
+              $tax_rate = 20.00;
           }
       
           // Calculate Item Tax and Item Price with Tax
