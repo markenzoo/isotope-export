@@ -335,6 +335,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       'tax_rate' => $tax_rate * 100,  // Show as 0, 7, or 19
       'item_price_with_tax' => Isotope::formatPrice($final_price),
       'sum' => 5,
+      'tax_class' => isset($surcharge['shipping']['tax_class']) ? $surcharge['shipping']['tax_class'] : null,
     );
   }
 }
