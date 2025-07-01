@@ -332,9 +332,9 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       'item_sku' => '',
       'item_name' => 'Versandkosten',
       'item_price' => Isotope::formatPrice($shipping_total_price),
-      'tax_rate' => 0.19,  // Show as 0, 7, or 19
       'item_price_with_tax' => Isotope::formatPrice($final_price),
       'sum' => 5,
+      'tax_class' => 2,
     );
   }
 }
