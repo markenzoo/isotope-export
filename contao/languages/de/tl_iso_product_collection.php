@@ -41,6 +41,7 @@ $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax']             
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['final_price']         = "Gesamt Brutto";  // Final Price (after tax)
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price_with_tax'] = "Einzelpreis Brutto";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax_rate']            = "MwSt.-Satz";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax_class']            = "tax_class";
 
 
 
