@@ -348,12 +348,19 @@ foreach ($arrSurcharges as $pid => $surcharge) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
       }
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
-        // Fetch the tax surcharge for each item (similar to the shipping surcharge)
-        $tax_rate = 0;  // Default tax rate is 0
-        $item_tax = 0;  // Default tax amount is 0
-        if (isset($arrSurcharges[$objOrders->collection_id]['tax'])) {
-          $tax_rate = (float) str_replace('%', '', $arrSurcharges[$objOrders->collection_id]['tax']['price']) / 100;
-          //$item_tax = $item['item_price'] * $tax_rate; // Item's tax value
+        // tax_rate auf Basis von tax_class berechnen
+        $tax_rate = 0;
+        $tax_class = $item['tax_class'] ?? ($item['product_id'] ? ($taxClassMap[$item['product_id']] ?? '') : '');
+        
+        switch ((int) $tax_class) {
+          case 2:
+            $tax_rate = 0.19;
+            break;
+          case 4:
+            $tax_rate = 0.07;
+            break;
+          default:
+            $tax_rate = 0.00;
         }
 
       // Calculate Item Tax and Item Price with Tax
