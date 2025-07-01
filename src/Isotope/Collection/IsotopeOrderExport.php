@@ -281,6 +281,7 @@ class IsotopeOrderExport extends \Backend
         'item_price' => Isotope::formatPrice($objOrderItems->price),
         'configuration' => strip_tags(html_entity_decode($strConfig)),
         'sum' => Isotope::formatPrice($objOrderItems->quantity * $objOrderItems->price),
+        'product_id' => $objOrderItems->product_id,
       );
     }
 
@@ -334,7 +335,6 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       'tax_rate' => $tax_rate * 100,  // Show as 0, 7, or 19
       'item_price_with_tax' => Isotope::formatPrice($final_price),
       'sum' => 5,
-      'product_id' => $objOrderItems->product_id,
     );
   }
 }
