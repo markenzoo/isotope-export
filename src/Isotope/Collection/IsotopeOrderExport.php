@@ -349,8 +349,6 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       }
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
 
-        // Skip Versandkosten – sie wurden vorher schon berechnet
-        if ($item['item_name'] !== 'Versandkosten') {
           
           // tax_rate auf Basis von tax_class berechnen
           $tax_rate = 0;
@@ -381,7 +379,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
     
           $sum = $item['sum'];
           $price = $item['item_price'];
-        }
+
 
       //Add SKU to Shipping
       $sku = $item['item_sku'];
