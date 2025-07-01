@@ -285,6 +285,8 @@ class IsotopeOrderExport extends \Backend
       );
     }
 
+    $taxClassMap = $this->getTaxClassMapping();
+
     // Fetch surcharges (shipping and tax)
     $objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type IN ('shipping', 'tax')");
 
@@ -339,7 +341,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
   }
 }
 
-    $taxClassMap = $this->getTaxClassMapping();
+
 
     // Compile data for export
     while ($objOrders->next()) {
@@ -348,7 +350,32 @@ foreach ($arrSurcharges as $pid => $surcharge) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
       }
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
-
+         if ($item['item_name'] === 'Versandkosten') {
+          $this->arrContent[] = [
+            'order_id' => $objOrders->document_number,
+            'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
+            'company' => $objOrders->company,
+            'lastname' => $objOrders->lastname,
+            'firstname' => $objOrders->firstname,
+            'street' => $objOrders->street_1,
+            'postal' => $objOrders->postal,
+            'city' => $objOrders->city,
+            'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+            'phone' => $objOrders->phone,
+            'email' => $objOrders->email,
+            'count' => $item['count'],
+            'item_sku' => "84160",
+            'item_name' => 'Versandkosten',
+            'item_price' => $item['item_price'],
+            'item_price_with_tax' => $item['item_price_with_tax'],
+            'tax_rate' => $item['tax_rate'],
+            'tax' => '', // optional if you want to recalc
+            'final_price' => $item['item_price_with_tax'],
+            'sum' => $item['sum'],
+            'tax_class' => '', // optional
+          ];
+          continue; // ⛔ skip the rest of the loop
+        }
           
           // tax_rate auf Basis von tax_class berechnen
           $tax_rate = 0;
