@@ -108,7 +108,7 @@ class IsotopeOrderExport extends \Backend
                 $tax_rate = 0.07;
                 break;
             default:
-                $tax_rate = 0.00;
+                $tax_rate = 13.00;
         }
     }
 
