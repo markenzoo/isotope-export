@@ -352,6 +352,12 @@ foreach ($arrSurcharges as $pid => $surcharge) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
       }
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
+
+        // Skip Versandkosten – sie wurden vorher schon berechnet
+        if ($item['item_name'] === 'Versandkosten') {
+          continue;
+        }
+        
         // tax_rate auf Basis von tax_class berechnen
         $tax_rate = 0;
         $tax_class = $item['tax_class'] ?? ($item['product_id'] ? ($taxClassMap[$item['product_id']] ?? '') : '');
