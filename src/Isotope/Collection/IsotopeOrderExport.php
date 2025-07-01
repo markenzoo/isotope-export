@@ -343,10 +343,6 @@ foreach ($arrSurcharges as $pid => $surcharge) {
 
     // Compile data for export
     while ($objOrders->next()) {
-       
-      if (!isset($arrSurcharges[$objOrders->collection_id]['shipping'])) {
-        continue;
-      }
       // Check if the order_id (Bestell-Id) is not empty and it has shipping surcharge items
       if (!isset($arrOrderItems[$objOrders->collection_id]) || empty($objOrders->document_number)) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
@@ -370,23 +366,22 @@ foreach ($arrSurcharges as $pid => $surcharge) {
             default:
               $tax_rate = 0.00;
           }
-        }
       
-      // Calculate Item Tax and Item Price with Tax
-      $item_price = (float) strtr($item['item_price'], array('.' => '', ',' => '.'));
-      $item_tax = (float) $item_price * $tax_rate;
-
-      $item_price_with_tax = (float) $item_price + $item_tax;
-
-      $formatted_item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
-      $formatted_item_tax = number_format($item_tax, 2, ',', '.');
-
-      $final_price = $item_price_with_tax * $item['count'];
-      $final_price = number_format($final_price, 2, ',', '.');
-
-      $sum = $item['sum'];
-      $price = $item['item_price'];
-
+          // Calculate Item Tax and Item Price with Tax
+          $item_price = (float) strtr($item['item_price'], array('.' => '', ',' => '.'));
+          $item_tax = (float) $item_price * $tax_rate;
+    
+          $item_price_with_tax = (float) $item_price + $item_tax;
+    
+          $formatted_item_price_with_tax = number_format($item_price_with_tax, 2, ',', '.');
+          $formatted_item_tax = number_format($item_tax, 2, ',', '.');
+    
+          $final_price = $item_price_with_tax * $item['count'];
+          $final_price = number_format($final_price, 2, ',', '.');
+    
+          $sum = $item['sum'];
+          $price = $item['item_price'];
+        }
 
       //Add SKU to Shipping
       $sku = $item['item_sku'];
