@@ -68,6 +68,28 @@ class IsotopeOrderExport extends \Backend
 
 
   /**
+   * Gibt ein Mapping von product_id => tax_class zurück (nur erster Eintrag pro Produkt).
+   *
+   * @return array
+  */
+  protected function getTaxClassMapping(): array
+  {
+      $arrTaxClasses = [];
+  
+      $objTaxData = \Database::getInstance()->query("SELECT pid, tax_class FROM tl_iso_product_price");
+  
+      while ($objTaxData->next()) {
+          // Nur speichern, wenn pid noch nicht vorhanden ist
+          if (!isset($arrTaxClasses[$objTaxData->pid])) {
+              $arrTaxClasses[$objTaxData->pid] = $objTaxData->tax_class;
+          }
+      }
+  
+      return $arrTaxClasses;
+  }
+
+
+  /**
    * Generate the csv file and send it to the browser
    *
    * @param void
@@ -218,7 +240,7 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum');
+    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum', 'tax_class');
 
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
@@ -312,10 +334,12 @@ foreach ($arrSurcharges as $pid => $surcharge) {
       'tax_rate' => $tax_rate * 100,  // Show as 0, 7, or 19
       'item_price_with_tax' => Isotope::formatPrice($final_price),
       'sum' => 5,
+      'product_id' => $objOrderItems->product_id,
     );
   }
 }
 
+    $taxClassMap = $this->getTaxClassMapping();
 
     // Compile data for export
     while ($objOrders->next()) {
@@ -386,6 +410,7 @@ foreach ($arrSurcharges as $pid => $surcharge) {
           'tax' => $formatted_item_tax ?? '',
           'final_price' => $final_price ?? '',
           'sum' => $sum,
+          'tax_class' => isset($item['product_id']) ? ($taxClassMap[$item['product_id']] ?? '') : '',
         );
 
       }
