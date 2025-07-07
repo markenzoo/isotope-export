@@ -335,6 +335,8 @@ protected function getShippingSurchargeItem(array $surcharge): array
         $arrOrderItems[$pid][] = $shippingItem;
     }
 
+    $taxClassMap = $this->getTaxClassMapping();
+    
     // Compile data for export
     while ($objOrders->next()) {
       // Check if the order_id (Bestell-Id) is not empty and it has shipping surcharge items
@@ -381,7 +383,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
               $tax_rate = 0.07;
               break;
             default:
-              $tax_rate = 20.00;
+              $tax_rate = 999.99;
           }
       
           // Calculate Item Tax and Item Price with Tax
