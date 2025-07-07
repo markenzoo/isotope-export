@@ -88,33 +88,35 @@ class IsotopeOrderExport extends \Backend
       return $arrTaxClasses;
   }
 
-  protected function getShippingSurcharges(): array
-    {
-        $objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type = 'shipping'");
-        $arrSurcharges = [];
+ protected function getShippingSurcharges(): array
+{
+    $objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type = 'shipping'");
+    $arrSurcharges = [];
 
-        while ($objSurcharges->next()) {
-            $tax_rate = 0;
-            switch ($objSurcharges->tax_class) {
-                case 2: $tax_rate = 0.19; break;
-                case 4: $tax_rate = 0.07; break;
-            }
+    while ($objSurcharges->next()) {
+        $net_price = (float)$objSurcharges->total_price;
+        $tax_rate = 0;
 
-            $net_price = ($tax_rate > 0) ? $objSurcharges->total_price / (1 + $tax_rate) : $objSurcharges->total_price;
-            $tax = $objSurcharges->total_price - $net_price;
-
-            $arrSurcharges[$objSurcharges->pid] = [
-                'total_price' => $objSurcharges->total_price,
-                'tax_class' => $objSurcharges->tax_class,
-                'tax' => $tax,
-                'tax_rate' => $tax_rate,
-                'net_price' => $net_price
-            ];
+        switch ($objSurcharges->tax_class) {
+            case 2: $tax_rate = 0.19; break;
+            case 4: $tax_rate = 0.07; break;
         }
 
-        return $arrSurcharges;
+        $tax = $net_price * $tax_rate;
+        $gross_price = $net_price + $tax;
+
+        $arrSurcharges[$objSurcharges->pid] = [
+            'net_price' => $net_price,
+            'tax' => $tax,
+            'total_price' => $gross_price,
+            'tax_class' => $objSurcharges->tax_class,
+            'tax_rate' => $tax_rate
+        ];
     }
 
+    return $arrSurcharges;
+}
+  
 protected function getShippingSurchargeItem(array $surcharge): array
     {
         return [
