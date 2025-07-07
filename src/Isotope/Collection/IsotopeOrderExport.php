@@ -88,41 +88,26 @@ class IsotopeOrderExport extends \Backend
       return $arrTaxClasses;
   }
 
-  protected function getShippingSurchargeItem(array $surcharge, int $pid): ?array
+protected function getShippingSurchargeItem(array $surcharge, int $pid): ?array
 {
     if (!isset($surcharge['shipping'])) {
         return null;
     }
 
-    $shipping_total_price = (float) str_replace(',', '.', $surcharge['shipping']['total_price']);
-    $shipping_tax = isset($surcharge['shipping']['tax']) ? (float) str_replace(',', '.', $surcharge['shipping']['tax']) : 0;
+    $shipping_total_price = (float) $surcharge['shipping']['total_price'];
+    $tax_rate = $surcharge['shipping']['tax_rate'] ?? 0;
 
-    // Determine tax rate
-    $tax_rate = 77.00;
-    if (isset($surcharge['shipping']['tax_class'])) {
-        switch ((int) $surcharge['shipping']['tax_class']) {
-            case 2:
-                $tax_rate = 0.19;
-                break;
-            case 4:
-                $tax_rate = 0.07;
-                break;
-            default:
-                $tax_rate = 13.00;
-        }
-    }
-
-    // Calculate final price with tax
-    $final_price = $shipping_total_price + $shipping_tax;
+    $shipping_net_price = ($tax_rate > 0) ? $shipping_total_price / (1 + $tax_rate) : $shipping_total_price;
+    $shipping_tax = $shipping_total_price - $shipping_net_price;
 
     return [
         'count' => 1,
         'item_sku' => '',
         'item_name' => 'Versandkosten',
-        'item_price' => Isotope::formatPrice($shipping_total_price),
-        'item_price_with_tax' => Isotope::formatPrice($final_price),
+        'item_price' => Isotope::formatPrice($shipping_net_price),
+        'item_price_with_tax' => Isotope::formatPrice($shipping_total_price),
         'tax_rate' => $tax_rate * 100,
-        'sum' => Isotope::formatPrice($shipping_total_price),
+        'sum' => Isotope::formatPrice($shipping_net_price),
         'tax_class' => $surcharge['shipping']['tax_class'] ?? ''
     ];
 }
@@ -323,20 +308,27 @@ class IsotopeOrderExport extends \Backend
       );
     }
 
-    $taxClassMap = $this->getTaxClassMapping();
+$objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type IN ('shipping', 'tax')");
 
-    // Fetch surcharges (shipping and tax)
-    $objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type IN ('shipping', 'tax')");
-
-    $arrSurcharges = [];
-    while ($objSurcharges->next()) {
-      $arrSurcharges[$objSurcharges->pid][$objSurcharges->type] = [
-        'price' => $objSurcharges->price,
-        'total_price' => $objSurcharges->total_price,
-        'tax' => $objSurcharges->tax
-      ];
+$arrSurcharges = [];
+while ($objSurcharges->next()) {
+    $tax_rate = 0;
+    switch ($objSurcharges->tax_class) {
+        case 2: $tax_rate = 0.19; break;
+        case 4: $tax_rate = 0.07; break;
     }
 
+    $net_price = ($tax_rate > 0) ? $objSurcharges->total_price / (1 + $tax_rate) : $objSurcharges->total_price;
+    $tax = $objSurcharges->total_price - $net_price;
+
+    $arrSurcharges[$objSurcharges->pid][$objSurcharges->type] = [
+        'total_price' => $objSurcharges->total_price,
+        'tax_class' => $objSurcharges->tax_class,
+        'tax' => $tax,
+        'tax_rate' => $tax_rate
+    ];
+}
+    
  foreach ($arrSurcharges as $pid => $surcharge) {
     $shippingItem = $this->getShippingSurchargeItem($surcharge, $pid);
     if ($shippingItem !== null) {
