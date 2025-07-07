@@ -88,30 +88,48 @@ class IsotopeOrderExport extends \Backend
       return $arrTaxClasses;
   }
 
-protected function getShippingSurchargeItem(array $surcharge, int $pid): ?array
-{
-    if (!isset($surcharge['shipping'])) {
-        return null;
+  protected function getShippingSurcharges(): array
+    {
+        $objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type = 'shipping'");
+        $arrSurcharges = [];
+
+        while ($objSurcharges->next()) {
+            $tax_rate = 0;
+            switch ($objSurcharges->tax_class) {
+                case 2: $tax_rate = 0.19; break;
+                case 4: $tax_rate = 0.07; break;
+            }
+
+            $net_price = ($tax_rate > 0) ? $objSurcharges->total_price / (1 + $tax_rate) : $objSurcharges->total_price;
+            $tax = $objSurcharges->total_price - $net_price;
+
+            $arrSurcharges[$objSurcharges->pid] = [
+                'total_price' => $objSurcharges->total_price,
+                'tax_class' => $objSurcharges->tax_class,
+                'tax' => $tax,
+                'tax_rate' => $tax_rate,
+                'net_price' => $net_price
+            ];
+        }
+
+        return $arrSurcharges;
     }
 
-    $shipping_total_price = (float) $surcharge['shipping']['total_price'];
-    $tax_rate = $surcharge['shipping']['tax_rate'] ?? 0;
-
-    $shipping_net_price = ($tax_rate > 0) ? $shipping_total_price / (1 + $tax_rate) : $shipping_total_price;
-    $shipping_tax = $shipping_total_price - $shipping_net_price;
-
-    return [
-        'count' => 1,
-        'item_sku' => '',
-        'item_name' => 'Versandkosten',
-        'item_price' => Isotope::formatPrice($shipping_net_price),
-        'item_price_with_tax' => Isotope::formatPrice($shipping_total_price),
-        'tax_rate' => $tax_rate * 100,
-        'sum' => Isotope::formatPrice($shipping_net_price),
-        'tax_class' => $surcharge['shipping']['tax_class'] ?? ''
-    ];
-}
-
+protected function getShippingSurchargeItem(array $surcharge): array
+    {
+        return [
+            'count' => 1,
+            'item_sku' => '',
+            'item_name' => 'Versandkosten',
+            'item_price' => Isotope::formatPrice($surcharge['net_price']),
+            'item_price_with_tax' => Isotope::formatPrice($surcharge['total_price']),
+            'tax_rate' => $surcharge['tax_rate'] * 100,
+            'tax' => Isotope::formatPrice($surcharge['tax']),
+            'sum' => Isotope::formatPrice($surcharge['net_price']),
+            'tax_class' => $surcharge['tax_class']
+        ];
+    }
+  
   /**
    * Generate the csv file and send it to the browser
    *
@@ -308,34 +326,12 @@ protected function getShippingSurchargeItem(array $surcharge, int $pid): ?array
       );
     }
 
-$objSurcharges = \Database::getInstance()->query("SELECT * FROM tl_iso_product_collection_surcharge WHERE type IN ('shipping', 'tax')");
-
-$arrSurcharges = [];
-while ($objSurcharges->next()) {
-    $tax_rate = 0;
-    switch ($objSurcharges->tax_class) {
-        case 2: $tax_rate = 0.19; break;
-        case 4: $tax_rate = 0.07; break;
-    }
-
-    $net_price = ($tax_rate > 0) ? $objSurcharges->total_price / (1 + $tax_rate) : $objSurcharges->total_price;
-    $tax = $objSurcharges->total_price - $net_price;
-
-    $arrSurcharges[$objSurcharges->pid][$objSurcharges->type] = [
-        'total_price' => $objSurcharges->total_price,
-        'tax_class' => $objSurcharges->tax_class,
-        'tax' => $tax,
-        'tax_rate' => $tax_rate
-    ];
-}
-    
- foreach ($arrSurcharges as $pid => $surcharge) {
-    $shippingItem = $this->getShippingSurchargeItem($surcharge, $pid);
-    if ($shippingItem !== null) {
+ // Fetch shipping surcharges only once, cleanly
+    $surcharges = $this->getShippingSurcharges();
+    foreach ($surcharges as $pid => $surcharge) {
+        $shippingItem = $this->getShippingSurchargeItem($surcharge);
         $arrOrderItems[$pid][] = $shippingItem;
     }
-}
-
 
     // Compile data for export
     while ($objOrders->next()) {
@@ -363,7 +359,7 @@ while ($objSurcharges->next()) {
             'item_price' => $item['item_price'],
             'item_price_with_tax' => $item['item_price_with_tax'],
             'tax_rate' => $item['tax_rate'],
-            'tax' => '', // optional if you want to recalc
+            'tax' => $item['tax'],
             'final_price' => $item['item_price_with_tax'],
             'sum' => $item['sum'],
             'tax_class' => '', // optional
