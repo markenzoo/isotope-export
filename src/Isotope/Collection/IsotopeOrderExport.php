@@ -375,15 +375,19 @@ protected function getShippingSurchargeItem(array $surcharge): array
           $tax_rate = 90;
           $tax_class = $item['tax_class'] ?? ($item['product_id'] ? ($taxClassMap[$item['product_id']] ?? '') : '');
           
-          switch ((int) $tax_class) {
-            case 2:
-              $tax_rate = 0.19;
-              break;
-            case 4:
-              $tax_rate = 0.07;
-              break;
-            default:
-              $tax_rate = 999.99;
+          if (empty($tax_class)) {
+              $tax_rate = 0;
+          } else {
+              switch ((int) $tax_class) {
+                  case 2:
+                      $tax_rate = 0.19;
+                      break;
+                  case 4:
+                      $tax_rate = 0.07;
+                      break;
+                  default:
+                      $tax_rate = 999.99;
+              }
           }
       
           // Calculate Item Tax and Item Price with Tax
