@@ -383,7 +383,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
               $tax_rate = 0.07;
               break;
             default:
-              $tax_rate = 999.99;
+              $tax_rate = 0;
           }
       
           // Calculate Item Tax and Item Price with Tax
