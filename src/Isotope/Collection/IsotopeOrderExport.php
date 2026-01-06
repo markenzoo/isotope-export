@@ -343,33 +343,54 @@ protected function getShippingSurchargeItem(array $surcharge): array
       if (!isset($arrOrderItems[$objOrders->collection_id]) || empty($objOrders->document_number)) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
       }
+
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
-         if ($item['item_name'] === 'Versandkosten') {
-          $this->arrContent[] = [
-            'order_id' => $objOrders->document_number,
-            'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
-            'company' => $objOrders->company,
-            'lastname' => $objOrders->lastname,
-            'firstname' => $objOrders->firstname,
-            'street' => $objOrders->street_1,
-            'postal' => $objOrders->postal,
-            'city' => $objOrders->city,
-            'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
-            'phone' => $objOrders->phone,
-            'email' => $objOrders->email,
-            'count' => $item['count'],
-            'item_sku' => "84160",
-            'item_name' => 'Versandkosten',
-            'item_price' => $item['item_price'],
-            'item_price_with_tax' => $item['item_price_with_tax'],
-            'tax_rate' => $item['tax_rate'],
-            'tax' => $item['tax'],
-            'final_price' => $item['item_price_with_tax'],
-            'sum' => $item['sum'],
-            'tax_class' => '', // optional
-          ];
-          continue; // ⛔ skip the rest of the loop
-        }
+        if ($item['item_name'] === 'Versandkosten') {
+
+    // 1. Read values FROM ITEM
+    $price         = $item['item_price'];
+    $priceWithTax  = $item['item_price_with_tax'];
+    $tax           = $item['tax'];
+    $sum           = $item['sum'];
+    $finalPrice    = $item['item_price_with_tax'];
+
+    // 2. Apply minus for returns
+    if ($objOrders->order_status == "5") {
+        $price        = '-' . $price;
+        $priceWithTax = '-' . $priceWithTax;
+        $tax          = '-' . $tax;
+        $sum          = '-' . $sum;
+        $finalPrice   = '-' . $finalPrice;
+    }
+
+    // 3. Export MODIFIED values
+    $this->arrContent[] = [
+        'order_id' => $objOrders->document_number,
+        'date' => $this->parseDate($GLOBALS['TL_CONFIG']['datimFormat'], $objOrders->locked),
+        'company' => $objOrders->company,
+        'lastname' => $objOrders->lastname,
+        'firstname' => $objOrders->firstname,
+        'street' => $objOrders->street_1,
+        'postal' => $objOrders->postal,
+        'city' => $objOrders->city,
+        'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
+        'phone' => $objOrders->phone,
+        'email' => $objOrders->email,
+        'count' => $item['count'],
+        'item_sku' => '84160',
+        'item_name' => 'Versandkosten',
+        'item_price' => $price,
+        'item_price_with_tax' => $priceWithTax,
+        'tax_rate' => $item['tax_rate'],
+        'tax' => $tax,
+        'final_price' => $finalPrice,
+        'sum' => $sum,
+        'tax_class' => '',
+    ];
+
+    continue;
+}
+
           
           // tax_rate auf Basis von tax_class berechnen
           $tax_rate = 90;
