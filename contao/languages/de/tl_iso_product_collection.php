@@ -42,6 +42,8 @@ $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['final_price']     
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['item_price_with_tax'] = "Einzelpreis Brutto";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax_rate']            = "MwSt.-Satz";
 $GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['tax_class']            = "tax_class";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['form_infotext'] = "Informationen zur Bestellung";
+$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head']['form_infotext'] = "Informationen zur Bestellung";
 
 
 
