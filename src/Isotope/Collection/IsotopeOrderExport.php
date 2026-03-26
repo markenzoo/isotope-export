@@ -117,7 +117,7 @@ class IsotopeOrderExport extends \Backend
     return $arrSurcharges;
 }
   
-protected function getShippingSurchargeItem(array $surcharge): array
+  protected function getShippingSurchargeItem(array $surcharge): array
     {
         return [
             'count' => 1,
@@ -131,6 +131,75 @@ protected function getShippingSurchargeItem(array $surcharge): array
             'tax_class' => $surcharge['tax_class']
         ];
     }
+
+  protected function getFormInfotextFromSettings($settings): string
+  {
+    $arrCandidates = [];
+
+    if (is_array($settings)) {
+      $arrCandidates[] = $settings;
+    } elseif (is_object($settings)) {
+      $arrCandidates[] = (array) $settings;
+    } elseif (is_string($settings) && $settings !== '') {
+      $arrCandidates[] = deserialize($settings, true);
+
+      $arrJson = json_decode($settings, true);
+      if (json_last_error() === JSON_ERROR_NONE) {
+        $arrCandidates[] = $arrJson;
+      }
+
+      $arrPhp = @unserialize($settings);
+      if ($arrPhp !== false || $settings === 'b:0;') {
+        $arrCandidates[] = $arrPhp;
+      }
+    }
+
+    foreach ($arrCandidates as $arrCandidate) {
+      $formInfotext = $this->findFormInfotextValue($arrCandidate);
+      if ($formInfotext !== '') {
+        return $formInfotext;
+      }
+    }
+
+    return '';
+  }
+
+  protected function findFormInfotextValue($value): string
+  {
+    if (is_object($value)) {
+      $value = (array) $value;
+    }
+
+    if (!is_array($value)) {
+      return '';
+    }
+
+    if (isset($value['form_infotext']) && is_scalar($value['form_infotext'])) {
+      return (string) $value['form_infotext'];
+    }
+
+    if (
+      isset($value['email_data']) &&
+      (is_array($value['email_data']) || is_object($value['email_data']))
+    ) {
+      $emailData = is_object($value['email_data']) ? (array) $value['email_data'] : $value['email_data'];
+
+      if (isset($emailData['form_infotext']) && is_scalar($emailData['form_infotext'])) {
+        return (string) $emailData['form_infotext'];
+      }
+    }
+
+    foreach ($value as $nestedValue) {
+      if (is_array($nestedValue) || is_object($nestedValue)) {
+        $formInfotext = $this->findFormInfotextValue($nestedValue);
+        if ($formInfotext !== '') {
+          return $formInfotext;
+        }
+      }
+    }
+
+    return '';
+  }
   
   /**
    * Generate the csv file and send it to the browser
@@ -183,7 +252,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = ['order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'items', 'subTotal', 'grandTotal'];
+    $arrKeys = ['order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'form_infotext', 'items', 'subTotal', 'grandTotal'];
 
     // Fetch the current year (e.g., '25' for 2025)
     $currentYear = date('y');  // 'y' gives two digits of the current year (e.g., '25' for 2025)
@@ -241,6 +310,8 @@ protected function getShippingSurchargeItem(array $surcharge): array
         continue;
       }
 
+      $formInfotext = $this->getFormInfotextFromSettings($objOrders->settings);
+
       // Prepare SKU and price columns
       $skuColumns = array_pad($arrOrderSKUs[$objOrders->collection_id], $maxItems, ''); // Fill missing columns with empty strings
       $priceColumns = array_pad($arrOrderPrices[$objOrders->collection_id], $maxItems, '');
@@ -258,6 +329,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
         'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
         'phone' => $objOrders->phone,
         'email' => $objOrders->email,
+        'form_infotext' => $formInfotext,
         'items' => implode(' ', $arrOrderItems[$objOrders->collection_id]),
 
         //'subTotal' => number_format($objOrders->subTotal, 2, ',', ''),
@@ -283,7 +355,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum', 'tax_class');
+    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'form_infotext', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum', 'tax_class');
 
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
@@ -328,7 +400,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
       );
     }
 
- // Fetch shipping surcharges only once, cleanly
+    // Fetch shipping surcharges only once, cleanly
     $surcharges = $this->getShippingSurcharges();
     foreach ($surcharges as $pid => $surcharge) {
         $shippingItem = $this->getShippingSurchargeItem($surcharge);
@@ -343,6 +415,8 @@ protected function getShippingSurchargeItem(array $surcharge): array
       if (!isset($arrOrderItems[$objOrders->collection_id]) || empty($objOrders->document_number)) {
         continue;  // Skip this order if order_id is empty or no shipping surcharge exists
       }
+
+      $formInfotext = $this->getFormInfotextFromSettings($objOrders->settings);
 
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
         if ($item['item_name'] === 'Versandkosten') {
@@ -376,6 +450,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
         'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
         'phone' => $objOrders->phone,
         'email' => $objOrders->email,
+        'form_infotext' => $formInfotext,
         'count' => $item['count'],
         'item_sku' => '84160',
         'item_name' => 'Versandkosten',
@@ -452,6 +527,7 @@ protected function getShippingSurchargeItem(array $surcharge): array
           'country' => $GLOBALS['TL_LANG']['CNT'][$objOrders->country],
           'phone' => $objOrders->phone,
           'email' => $objOrders->email,
+          'form_infotext' => $formInfotext,
           'count' => $item['count'],
           'item_sku' => $sku,
           'item_name' => $item['item_name'],
