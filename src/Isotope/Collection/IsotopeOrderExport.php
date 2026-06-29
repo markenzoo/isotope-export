@@ -132,6 +132,13 @@ class IsotopeOrderExport extends \Backend
         ];
     }
 
+  protected function isTaxFreeExportCountry($country): bool
+  {
+    $country = strtoupper(trim((string) $country));
+
+    return in_array($country, ['AT', 'AUT', 'OESTERREICH', 'AUSTRIA'], true);
+  }
+
   protected function getFormInfotextFromSettings($settings): string
   {
     $arrCandidates = [];
@@ -355,7 +362,7 @@ class IsotopeOrderExport extends \Backend
     }
 
     $csvHead = &$GLOBALS['TL_LANG']['tl_iso_product_collection']['csv_head'];
-    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'form_infotext', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum', 'tax_class');
+    $arrKeys = array('order_id', 'date', 'company', 'lastname', 'firstname', 'street', 'postal', 'city', 'country', 'phone', 'email', 'form_infotext', 'count', 'item_sku', 'item_name', 'item_price', 'item_price_with_tax', 'tax_rate', 'tax', 'final_price', 'sum');
 
     foreach ($arrKeys as $v) {
       $this->arrHeaderFields[$v] = $csvHead[$v];
@@ -417,16 +424,18 @@ class IsotopeOrderExport extends \Backend
       }
 
       $formInfotext = $this->getFormInfotextFromSettings($objOrders->settings);
+      $isTaxFreeExportCountry = $this->isTaxFreeExportCountry($objOrders->country);
 
       foreach ($arrOrderItems[$objOrders->collection_id] as $item) {
         if ($item['item_name'] === 'Versandkosten') {
 
     // 1. Read values FROM ITEM
     $price         = $item['item_price'];
-    $priceWithTax  = $item['item_price_with_tax'];
-    $tax           = $item['tax'];
+    $priceWithTax  = $isTaxFreeExportCountry ? $item['item_price'] : $item['item_price_with_tax'];
+    $tax           = $isTaxFreeExportCountry ? Isotope::formatPrice(0) : $item['tax'];
     $sum           = $item['sum'];
-    $finalPrice    = $item['item_price_with_tax'];
+    $finalPrice    = $isTaxFreeExportCountry ? $item['item_price'] : $item['item_price_with_tax'];
+    $taxRate       = $isTaxFreeExportCountry ? 0 : $item['tax_rate'];
 
     // 2. Apply minus for returns
     if ($objOrders->order_status == "5") {
@@ -456,11 +465,10 @@ class IsotopeOrderExport extends \Backend
         'item_name' => 'Versandkosten',
         'item_price' => $price,
         'item_price_with_tax' => $priceWithTax,
-        'tax_rate' => $item['tax_rate'],
+        'tax_rate' => $taxRate,
         'tax' => $tax,
         'final_price' => $finalPrice,
         'sum' => $sum,
-        'tax_class' => '',
     ];
 
     continue;
@@ -481,7 +489,11 @@ class IsotopeOrderExport extends \Backend
             default:
               $tax_rate = 0;
           }
-      
+
+          if ($isTaxFreeExportCountry) {
+            $tax_rate = 0;
+          }
+       
           // Calculate Item Tax and Item Price with Tax
           $item_price = (float) strtr($item['item_price'], array('.' => '', ',' => '.'));
           $item_tax = (float) $item_price * $tax_rate;
@@ -537,7 +549,6 @@ class IsotopeOrderExport extends \Backend
           'tax' => $formatted_item_tax ?? '',
           'final_price' => $final_price ?? '',
           'sum' => $sum,
-          'tax_class' => isset($item['product_id']) ? ($taxClassMap[$item['product_id']] ?? '') : '',
         );
 
       }
