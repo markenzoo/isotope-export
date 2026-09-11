@@ -518,7 +518,7 @@ class IsotopeOrderExport extends \Backend
       }
 
       //Add Minus to Stornorechnungen
-      if($objOrders->order_status == "5" || "6") {
+      if($objOrders->order_status == "5" || $objOrders->order_status == "6")  {
         $formatted_item_price_with_tax = "-" . $formatted_item_price_with_tax;
         $formatted_item_tax = "-" . $formatted_item_tax;
         $final_price = "-" . $final_price;
